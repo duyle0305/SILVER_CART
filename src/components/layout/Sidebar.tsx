@@ -11,12 +11,16 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import PeopleIcon from '@mui/icons-material/People'
 import SettingsIcon from '@mui/icons-material/Settings'
 import InventoryIcon from '@mui/icons-material/Inventory'
+import ChatIcon from '@mui/icons-material/Forum'
 import { ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
+import { getUserRole } from '@/features/authentication/utils/tokenStorage'
+import { Role } from '@/features/authentication/constants'
 
 const Sidebar = () => {
   const { openLogoutConfirmationDialog } = useLogoutConfirmation()
+  const userRole = getUserRole()
 
   const dashboardItem = useMemo(
     () => ({
@@ -28,27 +32,49 @@ const Sidebar = () => {
   )
 
   const categories = useMemo(() => {
-    return [
-      {
+    if (!userRole) return []
+    const items = []
+
+    if (userRole === Role.ADMIN || userRole === Role.SUPER_ADMIN) {
+      items.push({
         name: 'Management',
         items: [
           { text: 'Users', icon: <PeopleIcon />, path: '/users' },
           { text: 'Products', icon: <InventoryIcon />, path: '/products' },
         ],
-      },
-      {
-        name: 'System',
-        items: [
-          { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
-          {
-            text: 'Log out',
-            icon: <LogoutIcon />,
-            action: openLogoutConfirmationDialog,
-          },
-        ],
-      },
-    ]
-  }, [openLogoutConfirmationDialog])
+      })
+    }
+
+    if (userRole === Role.CONSULTANT) {
+      items.push(
+        {
+          name: 'General',
+          items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
+        },
+        {
+          name: 'Management',
+          items: [
+            { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+            { text: 'Users', icon: <PeopleIcon />, path: '/users' },
+          ],
+        }
+      )
+    }
+
+    items.push({
+      name: 'System',
+      items: [
+        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+        {
+          text: 'Log out',
+          icon: <LogoutIcon />,
+          action: openLogoutConfirmationDialog,
+        },
+      ],
+    })
+
+    return items
+  }, [openLogoutConfirmationDialog, userRole])
 
   return (
     <StyledDrawer variant="permanent">

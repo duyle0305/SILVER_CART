@@ -1,8 +1,6 @@
 import type { SortType } from '@/constants'
-import {
-  fetchProducts,
-  type ProductQueryParams,
-} from '@/features/products/services/productService'
+import { fetchProducts } from '@/features/products/services/productService'
+import type { ProductQueryParams } from '@/features/products/types'
 import { useQuery } from '@tanstack/react-query'
 
 interface UseProductsParams {
@@ -13,10 +11,6 @@ interface UseProductsParams {
   keyword: string
   productType?: string
 }
-
-// const mapQueryParams = (params: UseProductsParams) => {
-//   const
-// }
 
 export function useProducts({
   page,

@@ -1,33 +1,76 @@
 import {
+  ActionButtonsContainer,
+  AddVariantButton,
   FormWrapper,
-  UploadBox,
-} from '@/features/products/components/styles/AddProductPage.styles'
-import {
-  addProductSchema,
-  type AddProductFormInputs,
-} from '@/features/products/schemas'
+  ImagePreviewBox,
+  RemoveButton,
+  RemoveImageButton,
+  SectionPaper,
+  SectionTitle,
+  StyledAvatar,
+  StyledVideoName,
+  VariantPaper,
+} from '@/features/products/components/styles/CreateUpdateProductPage.styles'
+import { ProductType } from '@/features/products/constants'
+import { addProductSchema } from '@/features/products/schemas'
+import { createProduct } from '@/features/products/services/productService'
+import type { ProductDataParam } from '@/features/products/types'
 import { useNotification } from '@/hooks/useNotification'
+import { uploadFile } from '@/services/fileUploadService'
 import { zodResolver } from '@hookform/resolvers/zod'
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
+import VideoCallIcon from '@mui/icons-material/VideoCall'
 import {
-  Avatar,
   Box,
   Button,
+  Checkbox,
+  FormControl,
+  FormHelperText,
   Grid,
-  IconButton,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  Select,
   Stack,
   TextField,
-  Typography,
+  Tooltip,
 } from '@mui/material'
-import { useRef, type ChangeEvent } from 'react'
-import { Controller, useForm, type SubmitHandler } from 'react-hook-form'
+import { useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  type SubmitHandler,
+} from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import type { z } from 'zod'
+import FileUploader from './components/FileUploader'
+import PreviewDialog from './components/PreviewDialog'
+import ProductVariantForm from './components/ProductVariantForm'
+import VideoThumbnail from './components/VideoThumbnail'
+import { useCategories } from '../categories/hooks/useCategories'
+import { useLoader } from '@/hooks/useLoader'
 
 const CreateUpdateProductPage = () => {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [previewFile, setPreviewFile] = useState<File | null>(null)
   const { showNotification } = useNotification()
+  const { mutateAsync: createProductMutation } = useMutation({
+    mutationFn: createProduct,
+  })
   const navigate = useNavigate()
+  const { data: categoriesData } = useCategories({})
+  const { showLoader, hideLoader } = useLoader()
+
+  type FormInputs = z.infer<typeof addProductSchema>
+
+  const handlePreview = (file: File) => {
+    setPreviewFile(file)
+  }
+
+  const handleClosePreview = () => {
+    setPreviewFile(null)
+  }
 
   const {
     register,
@@ -35,228 +78,293 @@ const CreateUpdateProductPage = () => {
     control,
     setValue,
     formState: { errors },
-  } = useForm<AddProductFormInputs>({
+  } = useForm<FormInputs>({
     resolver: zodResolver(addProductSchema),
     defaultValues: {
-      images: [],
       name: '',
       description: '',
-      productType: '',
-      category: '',
-      stock: 0,
-      weight: '',
-      originalPrice: 0,
-      discountPrice: 0,
+      productType: undefined,
+      categoryIds: [],
+      productVariants: [
+        {
+          variantName: '',
+          price: 0,
+          productItems: [
+            {
+              stock: 0,
+              originalPrice: 0,
+              discountedPrice: 0,
+              weight: 0,
+              images: [],
+            },
+          ],
+        },
+      ],
     },
   })
 
-  const onSubmit: SubmitHandler<AddProductFormInputs> = (data) => {
-    // TODO: handle form submission logic here
-    console.log('Form Submitted Data:', data)
-    showNotification('Product added successfully!', 'success')
-    navigate('/products')
+  const {
+    fields: variantFields,
+    append: appendVariant,
+    remove: removeVariant,
+  } = useFieldArray({
+    control,
+    name: 'productVariants',
+  })
+
+  const onSubmit: SubmitHandler<FormInputs> = async (data) => {
+    try {
+      showLoader()
+      let videoUrl = ''
+      if (data.videoFile) {
+        videoUrl = await uploadFile(data.videoFile, 'videos')
+      }
+
+      const processedVariants = await Promise.all(
+        data.productVariants.map(async (variant) => ({
+          ...variant,
+          productItems: await Promise.all(
+            variant.productItems.map(async (item) => {
+              const imageUrls = await Promise.all(
+                (item.images || []).map((file) => uploadFile(file, 'images'))
+              )
+              return {
+                sku: item.sku,
+                stock: item.stock,
+                originalPrice: item.originalPrice,
+                discountedPrice: item.discountedPrice,
+                weight: item.weight,
+                productImages: imageUrls.map((url, index) => ({
+                  imagePath: url,
+                  imageName: (item.images || [])[index]?.name || 'image',
+                })),
+              }
+            })
+          ),
+        }))
+      )
+
+      const finalPayload: ProductDataParam = {
+        name: data.name,
+        description: data.description || '',
+        videoPath: videoUrl,
+        productType: data.productType,
+        categoryIds: data.categoryIds,
+        productVariants: processedVariants,
+      }
+
+      await createProductMutation(finalPayload)
+      showNotification('Product added successfully!', 'success')
+      navigate('/products')
+    } catch (error) {
+      console.error('Error processing product:', error)
+      showNotification('Failed to add product. Please try again.', 'error')
+    } finally {
+      hideLoader()
+    }
   }
 
   return (
-    <Box>
-      <FormWrapper>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={4}>
+    <FormWrapper>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <SectionPaper>
+          <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
-              <Controller
-                name="images"
-                control={control}
-                render={({ field }) => (
-                  <>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                        const files = e.target.files
-                        if (files) {
-                          const newFiles = Array.from(files)
-                          setValue(
-                            'images',
-                            [...(field.value || []), ...newFiles],
-                            {
-                              shouldValidate: true,
-                            }
-                          )
-                        }
-                      }}
-                      style={{ display: 'none' }}
-                      accept="image/*"
-                      multiple
-                    />
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      {(field.value || []).map((file, index) => (
-                        <Box key={index} sx={{ position: 'relative' }}>
-                          <Avatar
-                            src={URL.createObjectURL(file)}
+              <Stack direction="row" gap={2}>
+                <Controller
+                  name="videoFile"
+                  control={control}
+                  render={({ field }) => (
+                    <Box>
+                      {field.value ? (
+                        <ImagePreviewBox>
+                          <StyledAvatar
                             variant="rounded"
-                            sx={{ width: 150, height: 150 }}
-                          />
-                          <IconButton
+                            onClick={() =>
+                              field.value && handlePreview(field.value)
+                            }
+                          >
+                            <VideoThumbnail file={field.value} />
+                          </StyledAvatar>
+                          <Tooltip
+                            title={field.value.name}
+                            placement="top"
+                            arrow
+                            followCursor
+                          >
+                            <StyledVideoName variant="caption" noWrap>
+                              {field.value.name}
+                            </StyledVideoName>
+                          </Tooltip>
+                          <RemoveImageButton
                             size="small"
-                            onClick={() => {
-                              const updatedFiles = [...(field.value || [])]
-                              updatedFiles.splice(index, 1)
-                              setValue('images', updatedFiles, {
-                                shouldValidate: true,
-                              })
-                            }}
-                            sx={{
-                              position: 'absolute',
-                              top: 4,
-                              right: 4,
-                              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                              '&:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 1)',
-                              },
-                            }}
+                            onClick={() => setValue('videoFile', undefined)}
                           >
                             <CloseIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      ))}
-                      <UploadBox onClick={() => fileInputRef.current?.click()}>
-                        <AddPhotoAlternateIcon sx={{ mb: 1 }} />
-                        <Typography variant="body2">Add Image(s)</Typography>
-                      </UploadBox>
-                    </Stack>
-                    {errors.images && (
-                      <Typography
-                        color="error"
-                        variant="caption"
-                        sx={{ mt: 1, display: 'block' }}
-                      >
-                        {errors.images.message}
-                      </Typography>
-                    )}
-                  </>
-                )}
+                          </RemoveImageButton>
+                        </ImagePreviewBox>
+                      ) : (
+                        <FileUploader
+                          label="Add Video"
+                          accept="video/*"
+                          icon={<VideoCallIcon />}
+                          onFileSelect={(files) =>
+                            setValue('videoFile', files[0], {
+                              shouldValidate: true,
+                            })
+                          }
+                        />
+                      )}
+                    </Box>
+                  )}
+                />
+              </Stack>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                {...register('name')}
+                label="Name"
+                placeholder="Enter name"
+                error={!!errors.name}
+                helperText={errors.name?.message}
+                fullWidth
               />
             </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Stack spacing={3}>
-                <TextField
-                  {...register('name')}
-                  label="Name"
-                  placeholder="Enter name"
-                  error={!!errors.name}
-                  helperText={errors.name?.message}
-                />
-                <TextField
-                  {...register('description')}
-                  label="Description"
-                  placeholder="Enter description"
-                  multiline
-                  rows={5}
-                  error={!!errors.description}
-                  helperText={errors.description?.message}
-                />
-              </Stack>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth error={!!errors.productType}>
+                <InputLabel id="product-type-label">Product type</InputLabel>
+                <Select
+                  labelId="product-type-label"
+                  id="product-type"
+                  {...register('productType')}
+                  label="Product type"
+                  defaultValue={ProductType.ALL}
+                >
+                  {Object.values(ProductType).map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.productType && (
+                  <FormHelperText>{errors.productType.message}</FormHelperText>
+                )}
+              </FormControl>
             </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    {...register('productType')}
-                    label="Product type"
-                    placeholder="Enter product type"
-                    error={!!errors.productType}
-                    helperText={errors.productType?.message}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    {...register('category')}
-                    label="Category"
-                    placeholder="Enter category"
-                    error={!!errors.category}
-                    helperText={errors.category?.message}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    {...register('stock', { valueAsNumber: true })}
-                    label="Stock"
-                    placeholder="Enter stock"
-                    type="number"
-                    error={!!errors.stock}
-                    helperText={errors.stock?.message}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    {...register('weight')}
-                    label="Weight"
-                    placeholder="Enter weight"
-                    error={!!errors.weight}
-                    helperText={errors.weight?.message}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    {...register('originalPrice', { valueAsNumber: true })}
-                    label="Original price"
-                    placeholder="Enter original price"
-                    type="number"
-                    inputProps={{ step: 'any' }}
-                    error={!!errors.originalPrice}
-                    helperText={errors.originalPrice?.message}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    {...register('discountPrice', { valueAsNumber: true })}
-                    label="Discount price"
-                    placeholder="Enter discount price"
-                    type="number"
-                    inputProps={{ step: 'any' }}
-                    error={!!errors.discountPrice}
-                    helperText={errors.discountPrice?.message}
-                    fullWidth
-                  />
-                </Grid>
-              </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth error={!!errors.categoryIds}>
+                <InputLabel id="product-categories-label">
+                  Categories
+                </InputLabel>
+                <Controller
+                  name="categoryIds"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="product-categories-label"
+                      multiple
+                      label="Categories"
+                      renderValue={(selectedIds) => {
+                        const selectedNames = (
+                          categoriesData?.results
+                            ?.filter((cat) => selectedIds.includes(cat.id))
+                            .map((cat) => cat.name) || []
+                        ).join(', ')
+                        return selectedNames
+                      }}
+                    >
+                      {categoriesData?.results?.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          <Checkbox
+                            checked={field.value.includes(category.id)}
+                          />
+                          <ListItemText primary={category.name} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                {errors.categoryIds && (
+                  <FormHelperText>
+                    {Array.isArray(errors.categoryIds)
+                      ? errors.categoryIds[0]?.message
+                      : errors.categoryIds.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
             </Grid>
-
             <Grid size={{ xs: 12 }}>
-              <Stack
-                direction="row"
-                justifyContent="flex-end"
-                alignItems="center"
-                spacing={2}
-                sx={{ mt: 3 }}
-              >
-                <Button
-                  variant="outlined"
-                  sx={{ width: '150px' }}
-                  type="button"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{ width: '150px' }}
-                  type="submit"
-                >
-                  Create
-                </Button>
-              </Stack>
+              <TextField
+                {...register('description')}
+                label="Description"
+                placeholder="Enter description"
+                multiline
+                rows={6}
+                fullWidth
+              />
             </Grid>
           </Grid>
-        </form>
-      </FormWrapper>
-    </Box>
+        </SectionPaper>
+
+        <SectionPaper>
+          <SectionTitle>Product Variant</SectionTitle>
+          {variantFields.map((variant, variantIndex) => (
+            <VariantPaper key={variant.id}>
+              {variantFields.length > 1 && (
+                <Stack direction="row" justifyContent="flex-end">
+                  <RemoveButton
+                    color="error"
+                    onClick={() => removeVariant(variantIndex)}
+                  >
+                    <CloseIcon />
+                  </RemoveButton>
+                </Stack>
+              )}
+              <ProductVariantForm
+                variantIndex={variantIndex}
+                control={control}
+                register={register}
+                errors={errors}
+                setValue={setValue}
+                onPreview={handlePreview}
+              />
+            </VariantPaper>
+          ))}
+          <Stack direction="row" justifyContent="flex-end">
+            <AddVariantButton
+              variant="outlined"
+              onClick={() =>
+                appendVariant({
+                  variantName: '',
+                  price: 0,
+                  productItems: [
+                    { stock: 0, originalPrice: 0, weight: 0, images: [] },
+                  ],
+                })
+              }
+            >
+              Add Variant
+            </AddVariantButton>
+          </Stack>
+        </SectionPaper>
+
+        <ActionButtonsContainer direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/products')}
+            sx={{ width: 150 }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" variant="contained" sx={{ width: 150 }}>
+            Create Product
+          </Button>
+        </ActionButtonsContainer>
+      </form>
+
+      <PreviewDialog file={previewFile} onClose={handleClosePreview} />
+    </FormWrapper>
   )
 }
 

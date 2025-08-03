@@ -1,3 +1,4 @@
+import type { SortType } from '@/constants'
 import {
   Checkbox,
   TableCell,
@@ -5,8 +6,6 @@ import {
   TableRow,
   TableSortLabel,
 } from '@mui/material'
-
-type Order = 'Ascending' | 'Descending'
 
 export interface HeadCell<T> {
   id: keyof T | string
@@ -17,11 +16,12 @@ interface BaseTableHeadProps<T> {
   numSelected: number
   onRequestSort: (property: keyof T | string) => void
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void
-  order: Order
+  order: SortType
   orderBy: keyof T | string
   rowCount: number
   headCells: readonly HeadCell<T>[]
   showCheckbox?: boolean
+  allowModify?: boolean
 }
 
 export function BaseTableHead<T>(props: BaseTableHeadProps<T>) {
@@ -34,6 +34,7 @@ export function BaseTableHead<T>(props: BaseTableHeadProps<T>) {
     onRequestSort,
     headCells,
     showCheckbox = true,
+    allowModify = true,
   } = props
   const sortDirection = order === 'Ascending' ? 'asc' : 'desc'
 
@@ -66,7 +67,9 @@ export function BaseTableHead<T>(props: BaseTableHeadProps<T>) {
             </TableSortLabel>
           </TableCell>
         ))}
-        <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+        {allowModify && (
+          <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+        )}
       </TableRow>
     </TableHead>
   )

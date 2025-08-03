@@ -5,7 +5,7 @@ import {
   ListSubheader,
   Toolbar,
 } from '@mui/material'
-import { alpha, styled } from '@mui/material/styles' // Import alpha for transparent colors
+import { alpha, styled } from '@mui/material/styles'
 
 export const DRAWER_WIDTH = 280
 
@@ -43,7 +43,6 @@ export const StyledNavItem = styled(ListItemButton, {
     minWidth: '35px',
   },
 
-  // Active state styles
   '&.active': {
     color: theme.palette.primary.main,
     backgroundColor: alpha(theme.palette.primary.main, 0.08),

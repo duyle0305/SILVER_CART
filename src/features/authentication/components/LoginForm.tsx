@@ -12,7 +12,11 @@ import {
   Subtitle,
   Title,
 } from '@/features/authentication/styles/LoginForm.styles'
-import { saveTokens } from '@/features/authentication/utils/tokenStorage'
+import {
+  saveTokens,
+  saveUserId,
+  saveUserRole,
+} from '@/features/authentication/utils/tokenStorage'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Alert,
@@ -26,6 +30,7 @@ import {
 import { useToggle } from 'ahooks'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
+import type { Role } from '../constants'
 
 const LoginForm = () => {
   const navigate = useNavigate()
@@ -58,6 +63,8 @@ const LoginForm = () => {
           responseData.refreshToken,
           data.stayLoggedIn
         )
+        saveUserRole(responseData.role as Role, data.stayLoggedIn)
+        saveUserId(responseData.userId, data.stayLoggedIn)
         navigate('/')
       },
       onError: () => {

@@ -3,32 +3,36 @@ import { type HeadCell } from '@/components/common/BaseTableHead'
 import ProductTableToolbar, {
   type ProductFilters,
 } from '@/features/products/components/ProductTableToolbar'
-import { ProductTypes } from '@/features/products/constants'
 import { useProducts } from '@/features/products/hooks/useProducts'
-import type { ProductData } from '@/features/products/services/productService'
+import { ProductType } from '@/features/products/constants'
+import type { ProductData } from '@/features/products/types'
 import { StyledTableRow } from '@/features/users/components/styles/UserTable.styles'
 import { useNotification } from '@/hooks/useNotification'
 import { useTable } from '@/hooks/useTable'
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
+import BorderColorIcon from '@mui/icons-material/BorderColor'
 import { Box, IconButton, TableCell } from '@mui/material'
 import { useDebounce } from 'ahooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Role } from '../authentication/constants'
+import { getUserRole } from '../authentication/utils/tokenStorage'
 
 const productHeadCells: readonly HeadCell<ProductData>[] = [
   { id: 'productName', label: 'Name' },
   { id: 'productType', label: 'Product Type' },
   { id: 'category', label: 'Category' },
-  { id: 'stock', label: 'Stock' },
-  { id: 'originalPrice', label: 'Original Price' },
-  { id: 'discountPrice', label: 'Discount Price' },
 ]
 
-export function ProductListPage() {
+function ProductListPage() {
+  const navigate = useNavigate()
   const [filters, setFilters] = useState<ProductFilters>({
     keyword: '',
-    productType: ProductTypes.ALL,
+    productType: ProductType.ALL,
   })
+  const userRole = getUserRole()
+  const allowModifyProduct = useMemo(() => {
+    return userRole === Role.ADMIN || userRole === Role.SUPER_ADMIN
+  }, [userRole])
   const debounceKeyword = useDebounce(filters.keyword, { wait: 500 })
   const table = useTable<ProductData>({ initialOrderBy: 'productName' })
   const { data, isLoading, error } = useProducts({
@@ -37,6 +41,7 @@ export function ProductListPage() {
     orderBy: table.orderBy,
     page: table.page,
     pageSize: table.rowsPerPage,
+    productType: filters.productType,
   })
 
   const { showNotification } = useNotification()
@@ -55,6 +60,13 @@ export function ProductListPage() {
     [data?.totalNumberOfPages]
   )
 
+  const updateProduct = useCallback(
+    (id: string) => {
+      navigate(`edit/${id}`)
+    },
+    [navigate]
+  )
+
   useEffect(() => {
     if (error) {
       const errorMessage = error.message || 'Failed to load products data.'
@@ -63,25 +75,31 @@ export function ProductListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [error])
 
-  const renderProductRow = (product: ProductData) => (
+  const renderProductRow = (
+    product: ProductData,
+    _: boolean,
+    index: number
+  ) => (
     <StyledTableRow key={product.id} hover>
-      <TableCell>{product.id}</TableCell>
-      <TableCell sx={{ color: 'primary.main', fontWeight: 'medium' }}>
-        {product.name}
-      </TableCell>
+      <TableCell>{table.page * table.rowsPerPage + index + 1}</TableCell>
+      <TableCell>{product.productName}</TableCell>
       <TableCell>{product.productType}</TableCell>
-      <TableCell>{product.category}</TableCell>
-      <TableCell>{product.stock.toLocaleString()}</TableCell>
-      <TableCell>{product.originalPrice.toLocaleString()} VND</TableCell>
-      <TableCell>{product.discountPrice.toLocaleString()} VND</TableCell>
       <TableCell>
-        <IconButton size="small" color="primary">
-          <EditIcon fontSize="small" />
-        </IconButton>
-        <IconButton size="small" color="error">
-          <DeleteIcon fontSize="small" />
-        </IconButton>
+        {product.productCategories
+          .map((productCategory) => productCategory.categoryName)
+          .join(',')}
       </TableCell>
+      {allowModifyProduct && (
+        <TableCell>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => updateProduct(product.id)}
+          >
+            <BorderColorIcon fontSize="small" />
+          </IconButton>
+        </TableCell>
+      )}
     </StyledTableRow>
   )
 
@@ -101,7 +119,10 @@ export function ProductListPage() {
           />
         }
         renderRow={renderProductRow}
+        allowModify={allowModifyProduct}
       />
     </Box>
   )
 }
+
+export default ProductListPage

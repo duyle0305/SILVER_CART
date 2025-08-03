@@ -1,6 +1,7 @@
 import {
   ACCESS_TOKEN_KEY,
   REFRESH_TOKEN_KEY,
+  Role,
 } from '@/features/authentication/constants'
 
 export const getStorage = (stayLoggedIn?: boolean) => {
@@ -36,4 +37,32 @@ export const clearTokens = () => {
   localStorage.removeItem(REFRESH_TOKEN_KEY)
   sessionStorage.removeItem(ACCESS_TOKEN_KEY)
   sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
+export const saveUserRole = (userRole: Role, stayLoggedIn?: boolean) => {
+  const storage = getStorage(stayLoggedIn)
+  storage.setItem('userRole', userRole)
+}
+
+export const getUserRole = () => {
+  return localStorage.getItem('userRole') || sessionStorage.getItem('userRole')
+}
+
+export const clearUserRole = () => {
+  localStorage.removeItem('userRole')
+  sessionStorage.removeItem('userRole')
+}
+
+export const saveUserId = (userId: string, stayLoggedIn?: boolean) => {
+  const storage = getStorage(stayLoggedIn)
+  storage.setItem('userId', userId)
+}
+
+export const getUserId = () => {
+  return localStorage.getItem('userId') || sessionStorage.getItem('userId')
+}
+
+export const clearUserId = () => {
+  localStorage.removeItem('userId')
+  sessionStorage.removeItem('userId')
 }

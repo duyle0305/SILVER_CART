@@ -5,6 +5,9 @@ import {
   StyledSubtitle,
   StyledTitle,
 } from '@/components/layout/styles/Header.styles'
+import { getUserId } from '@/features/authentication/utils/tokenStorage'
+import { useUserDetail } from '@/features/users/hooks/useUserDetail'
+import { useLoader } from '@/hooks/useLoader'
 import { isRouteHandle } from '@/types/router.d'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import {
@@ -16,11 +19,17 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material'
+import { useEffect } from 'react'
 import { useLocation, useMatches, Link as RouterLink } from 'react-router-dom'
 
 const Header = () => {
   const matches = useMatches()
   const location = useLocation()
+  const userId = getUserId()
+  const { data: userDetail, isLoading: isLoadingUserDetail } = useUserDetail(
+    userId ?? ''
+  )
+  const { showLoader, hideLoader } = useLoader()
   const isRootPath = location.pathname === '/'
   const crumbs = matches
     .filter(
@@ -38,6 +47,14 @@ const Header = () => {
   const title =
     crumbs.length > 0 ? crumbs[crumbs.length - 1].title : 'Dashboard'
 
+  useEffect(() => {
+    if (isLoadingUserDetail) {
+      showLoader()
+    } else {
+      hideLoader()
+    }
+  }, [isLoadingUserDetail, showLoader, hideLoader])
+
   return (
     <StyledAppBar position="static">
       <Toolbar>
@@ -45,7 +62,7 @@ const Header = () => {
           {isRootPath ? (
             <>
               <StyledTitle variant="h5" fontWeight="bold">
-                Welcome Back, Annie Suh!
+                Welcome Back, {userDetail?.fullName}!
               </StyledTitle>
               <StyledSubtitle variant="subtitle1">
                 Statistics of all SilverCart system data
@@ -88,10 +105,10 @@ const Header = () => {
             <StyledAvatar />
             <Box>
               <Typography variant="body2" fontWeight="bold">
-                Annie Suh
+                {userDetail?.fullName}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Store manager
+                {userDetail?.role}
               </Typography>
             </Box>
           </Stack>

@@ -1,9 +1,8 @@
+import { SortType } from '@/constants'
 import { useState, useCallback, type ChangeEvent } from 'react'
 
-type Order = 'Ascending' | 'Descending'
-
 export interface UseTableReturn<T> {
-  order: Order
+  order: SortType
   orderBy: keyof T | string
   selected: readonly (string | number)[]
   page: number
@@ -22,14 +21,14 @@ export interface UseTableReturn<T> {
 
 export function useTable<T extends { id: string | number }>({
   initialOrderBy = 'id',
-  initialOrder = 'Ascending',
+  initialOrder = SortType.Ascending,
   initialPageSize = 10,
 }: {
   initialOrderBy?: keyof T | string
-  initialOrder?: Order
+  initialOrder?: SortType
   initialPageSize?: number
 }): UseTableReturn<T> {
-  const [order, setOrder] = useState<Order>(initialOrder)
+  const [order, setOrder] = useState<SortType>(initialOrder)
   const [orderBy, setOrderBy] = useState<keyof T | string>(initialOrderBy)
   const [selected, setSelected] = useState<readonly (string | number)[]>([])
   const [page, setPage] = useState(0)
@@ -37,8 +36,8 @@ export function useTable<T extends { id: string | number }>({
 
   const handleRequestSort = useCallback(
     (property: keyof T | string) => {
-      const isAscending = orderBy === property && order === 'Ascending'
-      setOrder(isAscending ? 'Descending' : 'Ascending')
+      const isAscending = orderBy === property && order === SortType.Ascending
+      setOrder(isAscending ? SortType.Descending : SortType.Ascending)
       setOrderBy(property)
     },
     [order, orderBy]

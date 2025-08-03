@@ -1,9 +1,10 @@
+import { Role } from '@/features/authentication/constants'
+import { getUserRole } from '@/features/authentication/utils/tokenStorage'
 import {
   StyledToolbar,
   StyledToolbarContainer,
 } from '@/features/products/components/styles/ProductTableToolbar.styles'
-import { ProductTypes } from '@/features/products/constants'
-import type { ProductType } from '@/features/products/types'
+import { ProductType } from '@/features/products/constants'
 import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -17,7 +18,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useCallback, type ChangeEvent } from 'react'
+import { useCallback, useMemo, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export interface ProductFilters {
@@ -35,6 +36,10 @@ const ProductTableToolbar = ({
   onFiltersChange,
 }: ProductTableToolbarProps) => {
   const navigate = useNavigate()
+  const userRole = getUserRole()
+  const allowCreateProduct = useMemo(() => {
+    return userRole === Role.ADMIN || userRole === Role.SUPER_ADMIN
+  }, [userRole])
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     onFiltersChange(e.target.name as keyof ProductFilters, e.target.value)
@@ -74,13 +79,15 @@ const ProductTableToolbar = ({
         <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
           All products
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={createProduct}
-        >
-          Add Product
-        </Button>
+        {allowCreateProduct && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={createProduct}
+          >
+            Add Product
+          </Button>
+        )}
       </Stack>
       <StyledToolbar>
         <Grid container spacing={2}>
@@ -95,7 +102,7 @@ const ProductTableToolbar = ({
                 value={filters.productType}
                 onChange={handleSelectChange('productType')}
               >
-                {Object.values(ProductTypes).map((type) => (
+                {Object.values(ProductType).map((type) => (
                   <MenuItem key={type} value={type}>
                     {type}
                   </MenuItem>

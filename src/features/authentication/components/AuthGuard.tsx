@@ -1,13 +1,24 @@
-import { getAccessToken } from '@/features/authentication/utils/tokenStorage'
-import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '@/features/authentication/hooks/useAuth'
+import { type ReactNode } from 'react'
+import { Navigate } from 'react-router-dom'
+import type { Role } from '../constants'
 
-const useAuth = () => {
-  const user = getAccessToken()
-  return !!user
+interface AuthGuardProps {
+  children: ReactNode
+  roles?: Role[]
 }
 
-export function AuthGuard() {
-  const isAuth = useAuth()
+export function AuthGuard({ children, roles }: AuthGuardProps) {
+  const { isAuthenticated, role } = useAuth()
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
 
-  return isAuth ? <Outlet /> : <Navigate to="/login" />
+  const hasRequiredRole = !roles || roles.includes(role as Role)
+
+  if (!hasRequiredRole) {
+    return <Navigate to="/unauthorized" replace />
+  }
+
+  return <>{children}</>
 }

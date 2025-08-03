@@ -23,6 +23,7 @@ interface BaseTableProps<T extends { id: string | number }> {
   toolbar: ReactNode
   renderRow: (item: T, isSelected: boolean, index: number) => ReactNode
   showCheckbox?: boolean
+  allowModify?: boolean
 }
 
 export function BaseTable<T extends { id: string | number }>({
@@ -34,6 +35,7 @@ export function BaseTable<T extends { id: string | number }>({
   toolbar,
   renderRow,
   showCheckbox,
+  allowModify = true,
 }: BaseTableProps<T>) {
   return (
     <Paper sx={{ width: '100%', mb: 2 }}>
@@ -54,6 +56,7 @@ export function BaseTable<T extends { id: string | number }>({
             rowCount={data.length}
             headCells={headCells}
             showCheckbox={showCheckbox}
+            allowModify={allowModify}
           />
           <TableBody>
             {isLoading ? (

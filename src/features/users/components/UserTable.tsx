@@ -1,12 +1,13 @@
 import { BaseTable } from '@/components/common/BaseTable'
 import type { HeadCell } from '@/components/common/BaseTableHead'
+import { Role } from '@/features/authentication/constants'
+import { getUserRole } from '@/features/authentication/utils/tokenStorage'
 import { StyledTableRow } from '@/features/users/components/styles/UserTable.styles'
 import TableToolbar from '@/features/users/components/TableToolbar'
 import { useUsers } from '@/features/users/hooks/useUsers'
 import { type UserData } from '@/features/users/types'
 import { useNotification } from '@/hooks/useNotification'
 import { useTable } from '@/hooks/useTable'
-import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import { Checkbox, Chip, IconButton, TableCell } from '@mui/material'
 import { useDebounce } from 'ahooks'
@@ -29,6 +30,8 @@ const UserTable = () => {
   const table = useTable<UserData>({ initialOrderBy: 'fullName' })
 
   const { showNotification } = useNotification()
+  const userRole = getUserRole()
+  const isConsultant = userRole === Role.CONSULTANT
 
   const { data, isLoading, error } = useUsers({
     page: table.page,
@@ -36,6 +39,7 @@ const UserTable = () => {
     order: table.order,
     orderBy: table.orderBy,
     keyword: debouncedFilter,
+    role: isConsultant ? [Role.GUARDIAN, Role.GUARDIAN] : undefined,
   })
 
   const users = useMemo(() => data?.results || [], [data?.results])
@@ -90,14 +94,13 @@ const UserTable = () => {
         <TableCell>{user.phone || '-'}</TableCell>
         <TableCell>{user.emergencyContact || '-'}</TableCell>
         <TableCell>{user.email}</TableCell>
-        <TableCell>
-          <IconButton size="small" color="primary">
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" color="error">
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </TableCell>
+        {!isConsultant && (
+          <TableCell>
+            <IconButton size="small" color="primary">
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </TableCell>
+        )}
       </StyledTableRow>
     )
   }
@@ -122,6 +125,7 @@ const UserTable = () => {
           <TableToolbar filter={filter} onFilterChange={handleFilterChange} />
         }
         renderRow={renderTableRow}
+        allowModify={!isConsultant}
       />
     </>
   )
