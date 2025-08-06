@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 export function useUserDetail(id: string) {
   return useQuery({
     queryKey: ['userDetail', id],
-    queryFn: () => fetchUserDetail(id),
+    queryFn: ({ signal }) => fetchUserDetail(id, signal),
     refetchOnWindowFocus: false,
   })
 }

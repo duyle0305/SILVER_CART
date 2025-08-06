@@ -31,7 +31,7 @@ export function useProducts({
 
   return useQuery({
     queryKey: ['products', queryParams],
-    queryFn: () => fetchProducts(queryParams),
+    queryFn: ({ signal }) => fetchProducts(queryParams, signal),
     refetchOnWindowFocus: false,
   })
 }

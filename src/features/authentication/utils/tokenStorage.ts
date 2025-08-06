@@ -1,8 +1,4 @@
-import {
-  ACCESS_TOKEN_KEY,
-  REFRESH_TOKEN_KEY,
-  Role,
-} from '@/features/authentication/constants'
+import { ACCESS_TOKEN_KEY, Role } from '@/features/authentication/constants'
 
 export const getStorage = (stayLoggedIn?: boolean) => {
   return stayLoggedIn ? localStorage : sessionStorage
@@ -15,28 +11,18 @@ export const getAccessToken = () => {
   )
 }
 
-export const getRefreshToken = () => {
-  return (
-    localStorage.getItem(REFRESH_TOKEN_KEY) ||
-    sessionStorage.getItem(REFRESH_TOKEN_KEY)
-  )
-}
-
-export const saveTokens = (
-  accessToken: string,
-  refreshToken: string,
-  stayLoggedIn?: boolean
-) => {
+export const saveTokens = (accessToken: string, stayLoggedIn?: boolean) => {
   const storage = getStorage(stayLoggedIn)
   storage.setItem(ACCESS_TOKEN_KEY, accessToken)
-  storage.setItem(REFRESH_TOKEN_KEY, refreshToken)
 }
 
 export const clearTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
   sessionStorage.removeItem(ACCESS_TOKEN_KEY)
-  sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+  localStorage.removeItem('userRole')
+  sessionStorage.removeItem('userRole')
+  localStorage.removeItem('userId')
+  sessionStorage.removeItem('userId')
 }
 
 export const saveUserRole = (userRole: Role, stayLoggedIn?: boolean) => {
@@ -48,11 +34,6 @@ export const getUserRole = () => {
   return localStorage.getItem('userRole') || sessionStorage.getItem('userRole')
 }
 
-export const clearUserRole = () => {
-  localStorage.removeItem('userRole')
-  sessionStorage.removeItem('userRole')
-}
-
 export const saveUserId = (userId: string, stayLoggedIn?: boolean) => {
   const storage = getStorage(stayLoggedIn)
   storage.setItem('userId', userId)
@@ -60,9 +41,4 @@ export const saveUserId = (userId: string, stayLoggedIn?: boolean) => {
 
 export const getUserId = () => {
   return localStorage.getItem('userId') || sessionStorage.getItem('userId')
-}
-
-export const clearUserId = () => {
-  localStorage.removeItem('userId')
-  sessionStorage.removeItem('userId')
 }

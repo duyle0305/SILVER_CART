@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchStatisticsProducts } from '@/features/dashboard/services/statisticService'
-import type { TimeFrame } from '@/features/dashboard/constants'
+import type { TimeScope } from '@/features/dashboard/constants'
 
-export const useStatisticsProducts = (timeFrame: TimeFrame) => {
+export const useStatisticsProducts = (timeFrame: TimeScope) => {
   return useQuery({
     queryKey: ['statistics-products', timeFrame],
-    queryFn: () => fetchStatisticsProducts(timeFrame),
+    queryFn: ({ signal }) => fetchStatisticsProducts(timeFrame, signal),
     refetchOnWindowFocus: false,
   })
 }

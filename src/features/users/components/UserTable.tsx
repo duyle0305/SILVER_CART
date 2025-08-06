@@ -1,56 +1,60 @@
 import { BaseTable } from '@/components/common/BaseTable'
 import type { HeadCell } from '@/components/common/BaseTableHead'
-import { Role } from '@/features/authentication/constants'
-import { getUserRole } from '@/features/authentication/utils/tokenStorage'
+import { useRoles } from '@/features/roles/hooks/useRoles'
 import { StyledTableRow } from '@/features/users/components/styles/UserTable.styles'
 import TableToolbar from '@/features/users/components/TableToolbar'
 import { useUsers } from '@/features/users/hooks/useUsers'
-import { type UserData } from '@/features/users/types'
+import { type User } from '@/features/users/types'
 import { useNotification } from '@/hooks/useNotification'
 import { useTable } from '@/hooks/useTable'
-import EditIcon from '@mui/icons-material/Edit'
-import { Checkbox, Chip, IconButton, TableCell } from '@mui/material'
+import { Chip, TableCell } from '@mui/material'
 import { useDebounce } from 'ahooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const userHeadCells: readonly HeadCell<UserData>[] = [
+const userHeadCells: readonly HeadCell<User>[] = [
   { id: 'fullName', label: 'Full Name' },
-  { id: 'role', label: 'Role' },
-  { id: 'phone', label: 'Phone Number' },
-  { id: 'emergencyContact', label: 'SOS Contact' },
+  { id: 'roleName', label: 'Role' },
+  { id: 'phoneNumber', label: 'Phone Number' },
   { id: 'email', label: 'Email' },
+  { id: 'isVerified', label: 'Status' },
 ]
 
 const UserTable = () => {
   const [filter, setFilter] = useState('')
+  const [selectedRoleId, setSelectedRoleId] = useState('')
   const debouncedFilter = useDebounce(filter, { wait: 500 })
   const navigate = useNavigate()
-
-  const table = useTable<UserData>({ initialOrderBy: 'fullName' })
+  const table = useTable<User>({ initialOrderBy: 'fullName' })
 
   const { showNotification } = useNotification()
-  const userRole = getUserRole()
-  const isConsultant = userRole === Role.CONSULTANT
+
+  const { data: roles = [], isLoading: isLoadingRoles } = useRoles()
 
   const { data, isLoading, error } = useUsers({
     page: table.page,
     pageSize: table.rowsPerPage,
-    order: table.order,
-    orderBy: table.orderBy,
     keyword: debouncedFilter,
-    role: isConsultant ? [Role.GUARDIAN, Role.GUARDIAN] : undefined,
+    roleId: selectedRoleId,
   })
 
-  const users = useMemo(() => data?.results || [], [data?.results])
+  const users = useMemo(() => data?.items || [], [data?.items])
   const pageCount = useMemo(
-    () => data?.totalNumberOfPages || 0,
-    [data?.totalNumberOfPages]
+    () => (data ? Math.ceil(data.totalItems / data.pageSize) : 0),
+    [data]
   )
 
   const handleFilterChange = useCallback(
     (value: string) => {
       setFilter(value)
+      table.setFilterPage(0)
+    },
+    [table]
+  )
+
+  const handleRoleChange = useCallback(
+    (roleId: string) => {
+      setSelectedRoleId(roleId)
       table.setFilterPage(0)
     },
     [table]
@@ -64,43 +68,33 @@ const UserTable = () => {
   )
 
   const renderTableRow = (
-    user: UserData,
+    userRow: User,
     isItemSelected: boolean,
     index: number
   ) => {
     return (
       <StyledTableRow
-        key={user.id}
+        key={userRow.id}
         hover
         selected={isItemSelected}
         onClick={() => {
-          onRowClick(user.id)
+          onRowClick(userRow.id)
         }}
       >
-        <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            color="primary"
-            checked={isItemSelected}
-            onChange={() => {
-              table.handleSelectRowClick(user.id)
-            }}
-          />
-        </TableCell>
         <TableCell>{table.page * table.rowsPerPage + index + 1}</TableCell>
-        <TableCell>{user.fullName}</TableCell>
+        <TableCell>{userRow.fullName}</TableCell>
         <TableCell>
-          <Chip label={user.role} size="small" />
+          <Chip label={userRow.roleName} size="small" />
         </TableCell>
-        <TableCell>{user.phone || '-'}</TableCell>
-        <TableCell>{user.emergencyContact || '-'}</TableCell>
-        <TableCell>{user.email}</TableCell>
-        {!isConsultant && (
-          <TableCell>
-            <IconButton size="small" color="primary">
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </TableCell>
-        )}
+        <TableCell>{userRow.phoneNumber || '-'}</TableCell>
+        <TableCell>{userRow.email}</TableCell>
+        <TableCell>
+          {userRow.isVerified ? (
+            <Chip label="Verified" variant="outlined" color="success" />
+          ) : (
+            <Chip label="Unverified" variant="outlined" color="error" />
+          )}
+        </TableCell>
       </StyledTableRow>
     )
   }
@@ -122,10 +116,18 @@ const UserTable = () => {
         pageCount={pageCount}
         table={table}
         toolbar={
-          <TableToolbar filter={filter} onFilterChange={handleFilterChange} />
+          <TableToolbar
+            filter={filter}
+            onFilterChange={handleFilterChange}
+            selectedRole={selectedRoleId}
+            onRoleChange={handleRoleChange}
+            roles={roles}
+            isLoadingRoles={isLoadingRoles}
+          />
         }
         renderRow={renderTableRow}
-        allowModify={!isConsultant}
+        allowModify={false}
+        showCheckbox={false}
       />
     </>
   )

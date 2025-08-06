@@ -1,4 +1,4 @@
-import { TimeFrame } from '@/features/dashboard/constants'
+import { TimeScope } from '@/features/dashboard/constants'
 import { apiClient } from '@/lib/axios'
 import type {
   CurrentStatisticResponse,
@@ -11,81 +11,96 @@ import type {
 } from '../types'
 
 export const fetchStatisticsProducts = async (
-  timeFrame: TimeFrame
+  timeScope: TimeScope,
+  signal: AbortSignal
 ): Promise<StatisticProduct[]> => {
   const response = await apiClient.get<StatisticProduct[]>(
-    'Statistic/total-products',
+    'Statistic/TotalProducts',
     {
-      params: { TimeFrame: timeFrame },
+      params: { timeScope },
+      signal,
     }
   )
   return response
 }
 
 export const fetchStatisticCustomers = async (
-  timeFrame: TimeFrame
+  timeScope: TimeScope,
+  signal: AbortSignal
 ): Promise<StatisticCustomers[]> => {
   const response = await apiClient.get<StatisticCustomers[]>(
-    'Statistic/total-customers',
+    'Statistic/TotalCustomers',
     {
-      params: { TimeFrame: timeFrame },
+      params: { timeScope },
+      signal,
     }
   )
   return response
 }
 
 export const fetchStatisticOrders = async (
-  timeFrame: TimeFrame
+  timeScope: TimeScope,
+  signal: AbortSignal
 ): Promise<StatisticOrders[]> => {
   const response = await apiClient.get<StatisticOrders[]>(
-    'Statistic/total-orders',
+    'Statistic/TotalOrders',
     {
-      params: { TimeFrame: timeFrame },
+      params: { timeScope },
+      signal,
     }
   )
   return response
 }
 
 export const fetchStatisticRevenues = async (
-  timeFrame: TimeFrame
+  timeFrame: TimeScope,
+  signal: AbortSignal
 ): Promise<StatisticRevenues[]> => {
   const response = await apiClient.get<StatisticRevenues[]>(
-    'Statistic/total-revenues',
+    'Statistic/TotalRevenues',
     {
-      params: { TimeFrame: timeFrame },
+      params: { timeScope: timeFrame },
+      signal,
     }
   )
+
   return response
 }
 
 export const fetchTopNProducts = async (
-  topN: number
+  topN: number,
+  signal: AbortSignal
 ): Promise<TopNProductsResponse> => {
   const response = await apiClient.get<TopNProductsResponse>(
-    'Statistic/top-n-products',
+    'Statistic/TopNProducts',
     {
-      params: { TopN: topN },
+      params: { topN: topN },
+      signal,
     }
   )
   return response
 }
 
 export const fetchTopNCustomers = async (
-  topN: number
+  topN: number,
+  signal: AbortSignal
 ): Promise<TopNCustomersResponse> => {
   const response = await apiClient.get<TopNCustomersResponse>(
-    'Statistic/top-n-customers',
+    'Statistic/TopNCustomers',
     {
-      params: { TopN: topN },
+      params: { topN: topN },
+      signal,
     }
   )
   return response
 }
 
-export const fetchCurrentStatistic =
-  async (): Promise<CurrentStatisticResponse> => {
-    const response = await apiClient.get<CurrentStatisticResponse>(
-      'Statistic/current-statistics'
-    )
-    return response
-  }
+export const fetchCurrentStatistic = async (
+  signal: AbortSignal
+): Promise<CurrentStatisticResponse> => {
+  const response = await apiClient.get<CurrentStatisticResponse>(
+    'Statistic/CurrentStatistics',
+    { signal }
+  )
+  return response
+}

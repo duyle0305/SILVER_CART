@@ -1,7 +1,6 @@
 export interface BaseResponse<T> {
-  pageNumber: number
+  page: number
   pageSize: number
-  totalNumberOfPages: number
-  totalNumberOfRecords: number
-  results: T[]
+  totalItems: number
+  items: T[]
 }

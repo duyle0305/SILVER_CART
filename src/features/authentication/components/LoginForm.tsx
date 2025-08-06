@@ -12,11 +12,6 @@ import {
   Subtitle,
   Title,
 } from '@/features/authentication/styles/LoginForm.styles'
-import {
-  saveTokens,
-  saveUserId,
-  saveUserRole,
-} from '@/features/authentication/utils/tokenStorage'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Alert,
@@ -30,12 +25,13 @@ import {
 import { useToggle } from 'ahooks'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import type { Role } from '../constants'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 const LoginForm = () => {
   const navigate = useNavigate()
-  const { mutate: login, isPending } = useLogin()
+  const { mutate: loginMutation, isPending } = useLogin()
   const [isShowAlert, { setRight: showAlert }] = useToggle()
+  const { login } = useAuthContext()
 
   const {
     register,
@@ -44,7 +40,7 @@ const LoginForm = () => {
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      userName: '',
       password: '',
       stayLoggedIn: false,
     },
@@ -52,19 +48,13 @@ const LoginForm = () => {
 
   const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
     const payload = {
-      email: data.email,
+      userName: data.userName,
       password: data.password,
     }
 
-    login(payload, {
-      onSuccess: (responseData) => {
-        saveTokens(
-          responseData.accessToken,
-          responseData.refreshToken,
-          data.stayLoggedIn
-        )
-        saveUserRole(responseData.role as Role, data.stayLoggedIn)
-        saveUserId(responseData.userId, data.stayLoggedIn)
+    loginMutation(payload, {
+      onSuccess: async (responseData) => {
+        await login(responseData, data.stayLoggedIn)
         navigate('/')
       },
       onError: () => {
@@ -86,15 +76,15 @@ const LoginForm = () => {
         )}
 
         <Typography variant="subtitle1" fontWeight="medium">
-          Email
+          Username
         </Typography>
         <TextField
           fullWidth
           margin="dense"
-          placeholder="Enter email"
-          {...register('email')}
-          error={!!errors.email}
-          helperText={errors.email?.message}
+          placeholder="Enter username"
+          {...register('userName')}
+          error={!!errors.userName}
+          helperText={errors.userName?.message}
         />
 
         <Typography variant="subtitle1" fontWeight="medium" sx={{ mt: 2 }}>
@@ -119,9 +109,9 @@ const LoginForm = () => {
           type="submit"
           fullWidth
           variant="contained"
-          loading={isPending}
+          disabled={isPending}
         >
-          Log In
+          {isPending ? 'Logging in...' : 'Log In'}
         </LoginButton>
 
         <ForgotPasswordLink underline="hover">

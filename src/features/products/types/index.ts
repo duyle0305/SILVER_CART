@@ -52,23 +52,24 @@ export interface ProductQueryParams {
 
 export interface ProductDataParam {
   name: string
+  brand: string
   description: string
-  videoPath?: string
-  productType: ProductType
-  categoryIds: string[]
+  videoPath: string
+  weight: number
+  height: number
+  length: number
+  width: number
+  manufactureDate: string
+  expirationDate: string
+  valueCategoryIds: string[]
   productVariants: {
-    variantName: string
     price: number
-    productItems: {
-      sku?: string
-      stock: number
-      originalPrice: number
-      discountedPrice?: number
-      weight?: number
-      productImages: {
-        imagePath: string
-        imageName: string
-      }[]
+    discount: number
+    stock: number
+    isActive: boolean
+    productImages: {
+      url: string
     }[]
+    valueIds: string[]
   }[]
 }

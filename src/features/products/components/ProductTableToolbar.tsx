@@ -1,5 +1,4 @@
 import { Role } from '@/features/authentication/constants'
-import { getUserRole } from '@/features/authentication/utils/tokenStorage'
 import {
   StyledToolbar,
   StyledToolbarContainer,
@@ -20,6 +19,7 @@ import {
 } from '@mui/material'
 import { useCallback, useMemo, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 export interface ProductFilters {
   productType: ProductType
@@ -36,7 +36,9 @@ const ProductTableToolbar = ({
   onFiltersChange,
 }: ProductTableToolbarProps) => {
   const navigate = useNavigate()
-  const userRole = getUserRole()
+  const { user } = useAuthContext()
+  const userRole = user?.role
+
   const allowCreateProduct = useMemo(() => {
     return userRole === Role.ADMIN || userRole === Role.SUPER_ADMIN
   }, [userRole])

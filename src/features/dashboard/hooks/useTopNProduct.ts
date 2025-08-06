@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 export const useTopNProducts = (topN: number) => {
   return useQuery({
     queryKey: ['top-n-products', topN],
-    queryFn: () => fetchTopNProducts(topN),
+    queryFn: ({ signal }) => fetchTopNProducts(topN, signal),
     refetchOnWindowFocus: false,
   })
 }

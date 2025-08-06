@@ -1,6 +1,6 @@
 import { Grid, Box } from '@mui/material'
-import ConversationList from './components/ConversationList'
-import Chatbox from './components/ChatBox'
+import ConversationList from '@/features/chat/components/ConversationList'
+import Chatbox from '@/features/chat/components/ChatBox'
 
 export default function ChatPage() {
   return (

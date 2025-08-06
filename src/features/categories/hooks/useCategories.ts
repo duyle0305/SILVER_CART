@@ -30,7 +30,7 @@ export function useCategories({
 
   return useQuery({
     queryKey: ['categories', queryParams],
-    queryFn: () => fetchCategories(queryParams),
+    queryFn: ({ signal }) => fetchCategories(queryParams, signal),
     refetchOnWindowFocus: false,
   })
 }

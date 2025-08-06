@@ -1,29 +1,24 @@
-import type { SortType } from '@/constants'
-import type { Role } from '@/features/authentication/constants'
-
-export interface UserData {
-  id: string
-  fullName: string
-  email: string
-  phone: string
-  role: string
-  emergencyContact?: string
-}
-
 export interface User {
   id: string
   fullName: string
   email: string
-  phone: string
-  role: string
-  createdDate: string
+  phoneNumber: string
+  roleName: string
+  isVerified: boolean
 }
 
-export interface UserQueryParams {
-  'PagingRequest.Page'?: number
-  'PagingRequest.PageSize'?: number
-  'PagingRequest.SortType'?: SortType
-  'PagingRequest.ColName'?: string
-  keyword?: string
-  Role?: Role[]
+export interface UserBodyParam {
+  roleId?: string
+  searchTerm?: string
+  page: number
+  pageSize: number
+}
+
+export interface CreateUserPayload {
+  fullName: string
+  email: string
+  userName: string
+  phoneNumber: string
+  password: string
+  roleId: string
 }

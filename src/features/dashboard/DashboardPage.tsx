@@ -1,5 +1,15 @@
 import MetricCard from '@/features/dashboard/components/MetricCard'
-import { TimeFrame } from '@/features/dashboard/constants'
+import StatisticChart from '@/features/dashboard/components/StatisticChart'
+import TopCustomersTable from '@/features/dashboard/components/TopCustomersTable'
+import TopProductsTable from '@/features/dashboard/components/TopProductsTable'
+import { TimeScope } from '@/features/dashboard/constants'
+import { useCurrentStatistic } from '@/features/dashboard/hooks/useCurrentStatistic'
+import { useStatisticsOrders } from '@/features/dashboard/hooks/useStatisticOrders'
+import { useStatisticsRevenues } from '@/features/dashboard/hooks/useStatisticRevenues'
+import { useStatisticsCustomers } from '@/features/dashboard/hooks/useStatisticsCustomers'
+import { useStatisticsProducts } from '@/features/dashboard/hooks/useStatisticsProducts'
+import { useTopNCustomers } from '@/features/dashboard/hooks/useTopNCustomers'
+import { useTopNProducts } from '@/features/dashboard/hooks/useTopNProduct'
 import {
   BestSellingWrapper,
   DashboardWrapper,
@@ -8,17 +18,8 @@ import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange'
 import LocalMallIcon from '@mui/icons-material/LocalMall'
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt'
 import { Divider, Grid, Skeleton, Typography } from '@mui/material'
+import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
-import StatisticChart from './components/StatisticChart'
-import TopCustomersTable from './components/TopCustomersTable'
-import TopProductsTable from './components/TopProductsTable'
-import { useStatisticsOrders } from './hooks/useStatisticOrders'
-import { useStatisticsRevenues } from './hooks/useStatisticRevenues'
-import { useStatisticsCustomers } from './hooks/useStatisticsCustomers'
-import { useStatisticsProducts } from './hooks/useStatisticsProducts'
-import { useTopNCustomers } from './hooks/useTopNCustomers'
-import { useTopNProducts } from './hooks/useTopNProduct'
-import { useCurrentStatistic } from './hooks/useCurrentStatistic'
 
 const metrics = [
   {
@@ -41,17 +42,24 @@ const metrics = [
   },
 ]
 
+const formatTimePeriod = (timePeriod: string, timeScope: TimeScope) => {
+  if (timeScope === TimeScope.YEAR) {
+    return dayjs(timePeriod).format('MMM')
+  }
+  return dayjs(timePeriod).format('DD-MM')
+}
+
 const DashboardPage = () => {
   const [timeFrames, setTimeFrames] = useState<{
-    customers: TimeFrame
-    products: TimeFrame
-    orders: TimeFrame
-    revenues: TimeFrame
+    customers: TimeScope
+    products: TimeScope
+    orders: TimeScope
+    revenues: TimeScope
   }>({
-    customers: TimeFrame.WEEK,
-    products: TimeFrame.WEEK,
-    orders: TimeFrame.WEEK,
-    revenues: TimeFrame.WEEK,
+    customers: TimeScope.WEEK,
+    products: TimeScope.WEEK,
+    orders: TimeScope.WEEK,
+    revenues: TimeScope.WEEK,
   })
   const TOP_N_PRODUCTS = 10
   const TOP_N_CUSTOMERS = 10
@@ -72,16 +80,26 @@ const DashboardPage = () => {
     useCurrentStatistic()
 
   const productsChartData = productsData.map((product) => ({
-    name: product.timePeriod,
-    value: product.totalProducts,
+    name: formatTimePeriod(product.timePeriod, timeFrames.products),
+    value: product.count,
   }))
 
   const customersChartData = customerData.map((customer) => ({
-    name: customer.timePeriod,
-    value: customer.totalCustomers,
+    name: formatTimePeriod(customer.timePeriod, timeFrames.customers),
+    value: customer.count,
   }))
 
-  const onChangeTimeFrame = (type: string, value: TimeFrame) => {
+  const revenuesChartData = revenuesData.map((revenue) => ({
+    name: formatTimePeriod(revenue.timePeriod, timeFrames.revenues),
+    value: revenue.count,
+  }))
+
+  const ordersChartData = ordersData.map((order) => ({
+    name: formatTimePeriod(order.timePeriod, timeFrames.orders),
+    value: order.count,
+  }))
+
+  const onChangeTimeFrame = (type: string, value: TimeScope) => {
     setTimeFrames({
       ...timeFrames,
       [type]: value,
@@ -123,13 +141,10 @@ const DashboardPage = () => {
       </Grid>
 
       <Grid container spacing={2} mb={4}>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12 }}>
           <StatisticChart
             title="Revenues Statistics"
-            data={revenuesData.map((revenue) => ({
-              name: revenue.timePeriod,
-              value: revenue.totalRevenues,
-            }))}
+            data={revenuesChartData}
             filter={timeFrames.revenues}
             isLoading={isLoadingRevenues}
             onFilterChange={(value) => {
@@ -137,7 +152,7 @@ const DashboardPage = () => {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12 }}>
           <StatisticChart
             title="Products Statistics"
             data={productsChartData}
@@ -148,7 +163,7 @@ const DashboardPage = () => {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12 }}>
           <StatisticChart
             title="Customers Statistics"
             data={customersChartData}
@@ -159,13 +174,10 @@ const DashboardPage = () => {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12 }}>
           <StatisticChart
             title="Orders Statistics"
-            data={ordersData.map((order) => ({
-              name: order.timePeriod,
-              value: order.totalOrders,
-            }))}
+            data={ordersChartData}
             filter={timeFrames.orders}
             isLoading={isLoadingOrders}
             onFilterChange={(value) => {

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 export const useCurrentStatistic = () => {
   return useQuery({
     queryKey: ['current-statistic'],
-    queryFn: () => fetchCurrentStatistic(),
+    queryFn: ({ signal }) => fetchCurrentStatistic(signal),
     refetchOnWindowFocus: false,
   })
 }

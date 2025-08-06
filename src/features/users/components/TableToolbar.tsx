@@ -6,21 +6,44 @@ import AddIcon from '@mui/icons-material/Add'
 import SearchIcon from '@mui/icons-material/Search'
 import {
   Button,
+  FormControl,
   InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
+  type SelectChangeEvent,
 } from '@mui/material'
 import type { ChangeEvent } from 'react'
+import type { RoleResponse } from '@/features/roles/types'
+import { useNavigate } from 'react-router-dom'
 
 interface TableToolbarProps {
   filter: string
   onFilterChange: (value: string) => void
+  selectedRole: string
+  onRoleChange: (roleId: string) => void
+  roles: RoleResponse[]
+  isLoadingRoles: boolean
 }
 
-const TableToolbar = ({ filter, onFilterChange }: TableToolbarProps) => {
+const TableToolbar = ({
+  filter,
+  onFilterChange,
+  selectedRole,
+  onRoleChange,
+  roles,
+  isLoadingRoles,
+}: TableToolbarProps) => {
+  const navigate = useNavigate()
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     onFilterChange(e.target.value)
+  }
+
+  const handleRoleChange = (event: SelectChangeEvent<string>) => {
+    onRoleChange(event.target.value)
   }
 
   return (
@@ -34,18 +57,23 @@ const TableToolbar = ({ filter, onFilterChange }: TableToolbarProps) => {
         <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
           All users
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate('/users/add')}
+        >
           Add user
         </Button>
       </Stack>
       <StyledToolbar>
-        <Stack direction="row" spacing={2}>
+        <Stack direction="row" spacing={2} width="25%">
           <TextField
             variant="outlined"
             size="small"
             value={filter}
             onChange={handleSearch}
             placeholder="Search by keywords..."
+            sx={{ flexGrow: 1 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -54,6 +82,25 @@ const TableToolbar = ({ filter, onFilterChange }: TableToolbarProps) => {
               ),
             }}
           />
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel id="role-filter-label">Role</InputLabel>
+            <Select
+              labelId="role-filter-label"
+              label="Role"
+              value={selectedRole}
+              onChange={handleRoleChange}
+              disabled={isLoadingRoles}
+            >
+              <MenuItem value="">
+                <em>All Roles</em>
+              </MenuItem>
+              {roles.map((role) => (
+                <MenuItem key={role.id} value={role.id}>
+                  {role.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Stack>
       </StyledToolbar>
     </StyledToolbarContainer>

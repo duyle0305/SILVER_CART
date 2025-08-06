@@ -15,12 +15,13 @@ import ChatIcon from '@mui/icons-material/Forum'
 import { ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
-import { getUserRole } from '@/features/authentication/utils/tokenStorage'
 import { Role } from '@/features/authentication/constants'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 const Sidebar = () => {
   const { openLogoutConfirmationDialog } = useLogoutConfirmation()
-  const userRole = getUserRole()
+  const { user } = useAuthContext()
+  const userRole = user?.role
 
   const dashboardItem = useMemo(
     () => ({

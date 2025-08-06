@@ -15,13 +15,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { TimeFrame } from '../constants'
+import { TimeScope } from '../constants'
 import { RevenueChartWrapper } from '../styles/Dashboard.styles'
 
 interface StatisticChartProps {
   title?: string
-  filter: string
-  onFilterChange: (value: TimeFrame) => void
+  filter: number
+  onFilterChange: (value: TimeScope) => void
   isLoading: boolean
   data: { name: string; value: number }[]
 }
@@ -55,11 +55,11 @@ const StatisticChart = ({
           <Select
             value={filter}
             input={<OutlinedInput />}
-            onChange={(e) => onFilterChange(e.target.value as TimeFrame)}
+            onChange={(e) => onFilterChange(e.target.value as TimeScope)}
           >
-            <MenuItem value={TimeFrame.WEEK}>This Week</MenuItem>
-            <MenuItem value={TimeFrame.MONTH}>This Month</MenuItem>
-            <MenuItem value={TimeFrame.YEAR}>This Year</MenuItem>
+            <MenuItem value={TimeScope.WEEK}>This Week</MenuItem>
+            <MenuItem value={TimeScope.MONTH}>This Month</MenuItem>
+            <MenuItem value={TimeScope.YEAR}>This Year</MenuItem>
           </Select>
         </FormControl>
       </Box>

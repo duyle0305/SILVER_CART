@@ -1,7 +1,7 @@
-import { useAuth } from '@/features/authentication/hooks/useAuth'
+import { useAuthContext } from '@/contexts/AuthContext'
+import type { Role } from '@/features/authentication/constants'
 import { type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
-import type { Role } from '../constants'
 
 interface AuthGuardProps {
   children: ReactNode
@@ -9,12 +9,13 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, roles }: AuthGuardProps) {
-  const { isAuthenticated, role } = useAuth()
+  const { isAuthenticated, user } = useAuthContext()
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
-  const hasRequiredRole = !roles || roles.includes(role as Role)
+  const hasRequiredRole = !roles || (user && roles.includes(user.role))
 
   if (!hasRequiredRole) {
     return <Navigate to="/unauthorized" replace />

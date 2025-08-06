@@ -15,7 +15,7 @@ import { useDebounce } from 'ahooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Role } from '../authentication/constants'
-import { getUserRole } from '../authentication/utils/tokenStorage'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 const productHeadCells: readonly HeadCell<ProductData>[] = [
   { id: 'productName', label: 'Name' },
@@ -29,10 +29,13 @@ function ProductListPage() {
     keyword: '',
     productType: ProductType.ALL,
   })
-  const userRole = getUserRole()
+  const { user } = useAuthContext()
+  const userRole = user?.role
+
   const allowModifyProduct = useMemo(() => {
     return userRole === Role.ADMIN || userRole === Role.SUPER_ADMIN
   }, [userRole])
+
   const debounceKeyword = useDebounce(filters.keyword, { wait: 500 })
   const table = useTable<ProductData>({ initialOrderBy: 'productName' })
   const { data, isLoading, error } = useProducts({
@@ -54,10 +57,10 @@ function ProductListPage() {
     [table]
   )
 
-  const products = useMemo(() => data?.results || [], [data?.results])
+  const products = useMemo(() => data?.items || [], [data?.items])
   const pageCount = useMemo(
-    () => data?.totalNumberOfPages || 0,
-    [data?.totalNumberOfPages]
+    () => (data ? Math.ceil(data.totalItems / data.pageSize) : 0),
+    [data]
   )
 
   const updateProduct = useCallback(

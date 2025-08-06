@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/contexts/AuthContext'
 import { DialogProvider } from '@/contexts/DialogContext'
 import { LoaderProvider } from '@/contexts/LoaderContext'
 import { NotificationProvider } from '@/contexts/NotificationContext'
@@ -19,8 +20,10 @@ createRoot(document.getElementById('root')!).render(
         <DialogProvider>
           <NotificationProvider>
             <LoaderProvider>
-              <CssBaseline />
-              <RouterProvider router={router} />
+              <AuthProvider>
+                <CssBaseline />
+                <RouterProvider router={router} />
+              </AuthProvider>
             </LoaderProvider>
           </NotificationProvider>
         </DialogProvider>

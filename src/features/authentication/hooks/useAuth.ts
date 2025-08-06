@@ -1,14 +1,9 @@
-import {
-  getAccessToken,
-  getUserRole,
-} from '@/features/authentication/utils/tokenStorage'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 export const useAuth = () => {
-  const accessToken = getAccessToken()
-  const role = getUserRole()
-
+  const { isAuthenticated, user } = useAuthContext()
   return {
-    isAuthenticated: !!accessToken,
-    role,
+    isAuthenticated,
+    role: user?.role,
   }
 }

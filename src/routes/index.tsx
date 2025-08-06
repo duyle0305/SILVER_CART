@@ -10,6 +10,7 @@ import { createBrowserRouter, Outlet } from 'react-router-dom'
 const Dashboard = lazy(() => import('@/features/dashboard/DashboardPage'))
 const Users = lazy(() => import('@/features/users'))
 const UserDetailPage = lazy(() => import('@/features/users/UserDetailPage'))
+const CreateUserPage = lazy(() => import('@/features/users/CreateUserPage'))
 const Products = lazy(() => import('@/features/products/ProductListPage'))
 const ProductDetailPage = lazy(
   () => import('@/features/products/ProductDetailPage')
@@ -58,6 +59,13 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <Users />,
+          },
+          {
+            path: 'add',
+            element: <CreateUserPage />,
+            handle: {
+              title: 'Create User',
+            },
           },
           {
             path: ':id',

@@ -1,21 +1,21 @@
 export interface StatisticProduct {
   timePeriod: string
-  totalProducts: number
+  count: number
 }
 
 export interface StatisticCustomers {
   timePeriod: string
-  totalCustomers: number
+  count: number
 }
 
 export interface StatisticOrders {
   timePeriod: string
-  totalOrders: number
+  count: number
 }
 
 export interface StatisticRevenues {
   timePeriod: string
-  totalRevenues: number
+  count: number
 }
 
 export interface ProductItem {
