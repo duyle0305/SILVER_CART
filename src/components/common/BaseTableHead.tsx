@@ -22,6 +22,7 @@ interface BaseTableHeadProps<T> {
   headCells: readonly HeadCell<T>[]
   showCheckbox?: boolean
   allowModify?: boolean
+  isSortable?: boolean
 }
 
 export function BaseTableHead<T>(props: BaseTableHeadProps<T>) {
@@ -35,6 +36,7 @@ export function BaseTableHead<T>(props: BaseTableHeadProps<T>) {
     headCells,
     showCheckbox = true,
     allowModify = true,
+    isSortable = true,
   } = props
   const sortDirection = order === 'Ascending' ? 'asc' : 'desc'
 
@@ -55,16 +57,22 @@ export function BaseTableHead<T>(props: BaseTableHeadProps<T>) {
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id as string}
-            sortDirection={orderBy === headCell.id ? sortDirection : false}
+            sortDirection={
+              isSortable && orderBy === headCell.id ? sortDirection : false
+            }
             sx={{ fontWeight: 'bold' }}
           >
-            <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? sortDirection : 'asc'}
-              onClick={() => onRequestSort(headCell.id)}
-            >
-              {headCell.label}
-            </TableSortLabel>
+            {isSortable ? (
+              <TableSortLabel
+                active={orderBy === headCell.id}
+                direction={orderBy === headCell.id ? sortDirection : 'asc'}
+                onClick={() => onRequestSort(headCell.id)}
+              >
+                {headCell.label}
+              </TableSortLabel>
+            ) : (
+              headCell.label
+            )}
           </TableCell>
         ))}
         {allowModify && (

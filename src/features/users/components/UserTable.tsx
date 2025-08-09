@@ -128,6 +128,7 @@ const UserTable = () => {
         renderRow={renderTableRow}
         allowModify={false}
         showCheckbox={false}
+        isSortable={false}
       />
     </>
   )

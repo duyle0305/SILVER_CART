@@ -1,22 +1,54 @@
-import type { SortType } from '@/constants'
-import type { CategoryStatus } from '@/features/categories/constants'
+export interface SubCategory {
+  id: string
+  code: string
+  label: string
+  description: string
+  type: number
+  childrenId: string
+  childrentLabel: string
+}
 
 export interface Category {
   id: string
-  name: string
-  description: string
-  status: CategoryStatus
-  parentCategoryId?: string
-  parentCategoryName?: string
-  creationDate: string
-  productCount: number
+  label: string
+  note: string
+  type: number
+  values: SubCategory[]
 }
 
-export interface CategoryQueryParams {
-  'PagingRequest.Page'?: number
-  'PagingRequest.PageSize'?: number
-  'PagingRequest.SortType'?: SortType
-  'PagingRequest.ColName'?: string
-  keyword?: string
-  Status?: CategoryStatus
+export interface LeafNodesWithPaths {
+  valueId: string
+  code: string
+  label: string
+  description: string
+  type: number
+  path: string[]
+}
+
+export interface SubCategoryCreateBodyParam {
+  label: string
+  note: string
+  values: {
+    code: string
+    label: string
+    description: string
+  }[]
+}
+
+export interface CategoryRootCreateBodyParam {
+  code: string
+  label: string
+  description: string
+}
+
+export interface LinkCategoryWithSubCategoryBodyParam {
+  categoryId: string
+  subCategoryId: string | null
+}
+
+export interface CategoryNoValue {
+  id: string
+  label: string
+  note: string
+  type: number
 }

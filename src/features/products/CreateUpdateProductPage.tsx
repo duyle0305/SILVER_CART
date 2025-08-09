@@ -11,13 +11,7 @@ import {
   StyledVideoName,
   VariantPaper,
 } from '@/features/products/components/styles/CreateUpdateProductPage.styles'
-import { ProductType } from '@/features/products/constants'
-import { addProductSchema } from '@/features/products/schemas'
-import { createProduct } from '@/features/products/services/productService'
-import type { ProductDataParam } from '@/features/products/types'
-import { useNotification } from '@/hooks/useNotification'
-import { uploadFile } from '@/services/fileUploadService'
-import { zodResolver } from '@hookform/resolvers/zod'
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
 import VideoCallIcon from '@mui/icons-material/VideoCall'
 import {
@@ -25,79 +19,100 @@ import {
   Button,
   Checkbox,
   FormControl,
+  FormControlLabel,
   FormHelperText,
   Grid,
   InputLabel,
   ListItemText,
   MenuItem,
+  OutlinedInput,
   Select,
   Stack,
   TextField,
   Tooltip,
+  Typography,
+  Switch,
+  Chip,
 } from '@mui/material'
-import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Controller,
   useFieldArray,
   useForm,
   type SubmitHandler,
 } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import type { z } from 'zod'
+import { useNavigate, useParams } from 'react-router-dom'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useNotification } from '@/hooks/useNotification'
+import { useLoader } from '@/hooks/useLoader'
+import { isAxiosError } from 'axios'
 import FileUploader from './components/FileUploader'
 import PreviewDialog from './components/PreviewDialog'
-import ProductVariantForm from './components/ProductVariantForm'
 import VideoThumbnail from './components/VideoThumbnail'
-import { useCategories } from '../categories/hooks/useCategories'
-import { useLoader } from '@/hooks/useLoader'
+import { useLeafCategories } from '../categories/hooks/useLeafCategories'
+import { useAllValueProductProperty } from './hooks/useAllValueProductProperty'
+import {
+  createProductInputSchema,
+  createProductOutputSchema,
+  type CreateProductFormInputs,
+} from './schemas'
+import { uploadFile } from '@/services/fileUploadService'
+import type { CreateProductPayload } from './types'
+import { useCreateProduct } from './hooks/useCreateProduct'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import dayjs from 'dayjs'
+import { useBrands } from '../brands/hooks/useBrands'
+import { useUpdateProduct } from './hooks/useUpdateProduct'
+import { useProductDetail } from './hooks/useProductDetail'
+
+type ImageFile = File | { url: string }
 
 const CreateUpdateProductPage = () => {
-  const [previewFile, setPreviewFile] = useState<File | null>(null)
-  const { showNotification } = useNotification()
-  const { mutateAsync: createProductMutation } = useMutation({
-    mutationFn: createProduct,
-  })
+  const [previewFile, setPreviewFile] = useState<ImageFile | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const { id } = useParams<{ id: string }>()
+  const isEditMode = !!id
   const navigate = useNavigate()
-  const { data: categoriesData } = useCategories({})
+  const { showNotification } = useNotification()
   const { showLoader, hideLoader } = useLoader()
-
-  type FormInputs = z.infer<typeof addProductSchema>
-
-  const handlePreview = (file: File) => {
-    setPreviewFile(file)
-  }
-
-  const handleClosePreview = () => {
-    setPreviewFile(null)
-  }
+  const { data: leafCategories = [], isLoading: isLoadingCategories } =
+    useLeafCategories()
+  const { data: productProperties = [], isLoading: isLoadingProperties } =
+    useAllValueProductProperty()
+  const { mutateAsync: createProductMutation, isPending: isCreating } =
+    useCreateProduct()
+  const { data: brands = [], isLoading: isLoadingBrands } = useBrands()
+  const { mutateAsync: updateProductMutation, isPending: isUpdating } =
+    useUpdateProduct()
+  const { data: productDetail, isLoading: isLoadingProductDetail } =
+    useProductDetail(id!)
 
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    reset,
     formState: { errors },
-  } = useForm<FormInputs>({
-    resolver: zodResolver(addProductSchema),
+  } = useForm<CreateProductFormInputs>({
+    resolver: zodResolver(createProductInputSchema),
     defaultValues: {
       name: '',
+      brand: '',
       description: '',
-      productType: undefined,
-      categoryIds: [],
+      weight: '',
+      height: '',
+      length: '',
+      width: '',
+      valueCategoryIds: [],
       productVariants: [
         {
-          variantName: '',
-          price: 0,
-          productItems: [
-            {
-              stock: 0,
-              originalPrice: 0,
-              discountedPrice: 0,
-              weight: 0,
-              images: [],
-            },
-          ],
+          price: '',
+          discount: '',
+          stock: '',
+          isActive: true,
+          productImages: [],
+          valueIds: [],
         },
       ],
     },
@@ -112,185 +127,159 @@ const CreateUpdateProductPage = () => {
     name: 'productVariants',
   })
 
-  const onSubmit: SubmitHandler<FormInputs> = async (data) => {
+  const handlePreview = (file: ImageFile) => {
+    if (file instanceof File) {
+      setPreviewFile(file)
+    } else {
+      window.open(file.url, '_blank')
+    }
+  }
+  const handleClosePreview = () => setPreviewFile(null)
+
+  const onSubmit: SubmitHandler<CreateProductFormInputs> = async (data) => {
+    showLoader()
     try {
-      showLoader()
+      const transformedData = createProductOutputSchema.parse(data)
+
       let videoUrl = ''
-      if (data.videoFile) {
-        videoUrl = await uploadFile(data.videoFile, 'videos')
+      if (transformedData.videoFile) {
+        videoUrl = await uploadFile(transformedData.videoFile, 'videos')
       }
 
       const processedVariants = await Promise.all(
-        data.productVariants.map(async (variant) => ({
-          ...variant,
-          productItems: await Promise.all(
-            variant.productItems.map(async (item) => {
-              const imageUrls = await Promise.all(
-                (item.images || []).map((file) => uploadFile(file, 'images'))
-              )
-              return {
-                sku: item.sku,
-                stock: item.stock,
-                originalPrice: item.originalPrice,
-                discountedPrice: item.discountedPrice,
-                weight: item.weight,
-                productImages: imageUrls.map((url, index) => ({
-                  imagePath: url,
-                  imageName: (item.images || [])[index]?.name || 'image',
-                })),
-              }
-            })
-          ),
-        }))
+        transformedData.productVariants.map(async (variant) => {
+          const imageUrls = await Promise.all(
+            (variant.productImages || []).map((file) =>
+              uploadFile(file, 'images')
+            )
+          )
+          return {
+            price: variant.price,
+            discount: variant.discount,
+            stock: variant.stock,
+            isActive: variant.isActive,
+            valueIds: variant.valueIds,
+            productImages: imageUrls.map((url) => ({ url })),
+          }
+        })
       )
 
-      const finalPayload: ProductDataParam = {
-        name: data.name,
-        description: data.description || '',
+      const finalPayload: CreateProductPayload = {
+        name: transformedData.name,
+        brand: transformedData.brand,
+        description: transformedData.description || '',
         videoPath: videoUrl,
-        productType: data.productType,
-        categoryIds: data.categoryIds,
+        weight: transformedData.weight,
+        height: transformedData.height,
+        length: transformedData.length,
+        width: transformedData.width,
+        manufactureDate: new Date(
+          transformedData.manufactureDate
+        ).toISOString(),
+        expirationDate: new Date(transformedData.expirationDate).toISOString(),
+        valueCategoryIds: transformedData.valueCategoryIds,
         productVariants: processedVariants,
       }
 
-      await createProductMutation(finalPayload)
-      showNotification('Product added successfully!', 'success')
+      if (isEditMode) {
+        await updateProductMutation({ id: id!, data: finalPayload })
+        showNotification('Product updated successfully!', 'success')
+      } else {
+        await createProductMutation(finalPayload)
+        showNotification('Product created successfully!', 'success')
+      }
       navigate('/products')
     } catch (error) {
-      console.error('Error processing product:', error)
-      showNotification('Failed to add product. Please try again.', 'error')
+      let errorMessage = 'An unexpected error occurred.'
+      if (isAxiosError(error) && error.response) {
+        errorMessage =
+          error.response.data?.errors?.[0] ||
+          error.response.data?.message ||
+          'An unexpected API error occurred.'
+      }
+      showNotification(errorMessage, 'error')
     } finally {
       hideLoader()
     }
   }
 
+  useEffect(() => {
+    if (isEditMode && productDetail) {
+      const productVariants = productDetail.productVariants.map((variant) => ({
+        price: variant.price.toString(),
+        discount: variant.discount.toString(),
+        stock: variant.stock.toString(),
+        isActive: variant.isActive,
+        valueIds: variant.productVariantValues.map((v) => v.valueId),
+      }))
+      const formValues: Partial<CreateProductFormInputs> = {
+        name: String(productDetail.name),
+        brand: productDetail.brand,
+        description: productDetail.description || '',
+        weight: String(productDetail.weight),
+        height: String(productDetail.height),
+        length: String(productDetail.length),
+        width: String(productDetail.width),
+        manufactureDate: new Date(productDetail.manufactureDate),
+        expirationDate: new Date(productDetail.expirationDate),
+        valueCategoryIds: productDetail.categories.map((c) => c.id) ?? [],
+        productVariants,
+      }
+      reset(formValues)
+      if (productDetail.videoPath) {
+        setVideoUrl(productDetail.videoPath)
+      }
+    }
+  }, [isEditMode, productDetail, reset])
+
+  useEffect(() => {
+    if (isEditMode) {
+      if (isLoadingProductDetail) {
+        showLoader()
+      } else {
+        hideLoader()
+      }
+    }
+  }, [hideLoader, isEditMode, isLoadingProductDetail, showLoader])
+
+  const isPending = isCreating || isUpdating
+
   return (
     <FormWrapper>
       <form onSubmit={handleSubmit(onSubmit)}>
         <SectionPaper>
+          <SectionTitle>
+            {isEditMode ? 'Edit Product' : 'Basic Information'}
+          </SectionTitle>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12 }}>
-              <Stack direction="row" gap={2}>
-                <Controller
-                  name="videoFile"
-                  control={control}
-                  render={({ field }) => (
-                    <Box>
-                      {field.value ? (
-                        <ImagePreviewBox>
-                          <StyledAvatar
-                            variant="rounded"
-                            onClick={() =>
-                              field.value && handlePreview(field.value)
-                            }
-                          >
-                            <VideoThumbnail file={field.value} />
-                          </StyledAvatar>
-                          <Tooltip
-                            title={field.value.name}
-                            placement="top"
-                            arrow
-                            followCursor
-                          >
-                            <StyledVideoName variant="caption" noWrap>
-                              {field.value.name}
-                            </StyledVideoName>
-                          </Tooltip>
-                          <RemoveImageButton
-                            size="small"
-                            onClick={() => setValue('videoFile', undefined)}
-                          >
-                            <CloseIcon fontSize="small" />
-                          </RemoveImageButton>
-                        </ImagePreviewBox>
-                      ) : (
-                        <FileUploader
-                          label="Add Video"
-                          accept="video/*"
-                          icon={<VideoCallIcon />}
-                          onFileSelect={(files) =>
-                            setValue('videoFile', files[0], {
-                              shouldValidate: true,
-                            })
-                          }
-                        />
-                      )}
-                    </Box>
-                  )}
-                />
-              </Stack>
-            </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 {...register('name')}
-                label="Name"
-                placeholder="Enter name"
+                label="Product Name"
+                fullWidth
                 error={!!errors.name}
                 helperText={errors.name?.message}
-                fullWidth
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth error={!!errors.productType}>
-                <InputLabel id="product-type-label">Product type</InputLabel>
-                <Select
-                  labelId="product-type-label"
-                  id="product-type"
-                  {...register('productType')}
-                  label="Product type"
-                  defaultValue={ProductType.ALL}
-                >
-                  {Object.values(ProductType).map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.productType && (
-                  <FormHelperText>{errors.productType.message}</FormHelperText>
-                )}
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth error={!!errors.categoryIds}>
-                <InputLabel id="product-categories-label">
-                  Categories
-                </InputLabel>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth error={!!errors.brand}>
+                <InputLabel>Brand</InputLabel>
                 <Controller
-                  name="categoryIds"
+                  name="brand"
                   control={control}
+                  defaultValue=""
                   render={({ field }) => (
-                    <Select
-                      {...field}
-                      labelId="product-categories-label"
-                      multiple
-                      label="Categories"
-                      renderValue={(selectedIds) => {
-                        const selectedNames = (
-                          categoriesData?.results
-                            ?.filter((cat) => selectedIds.includes(cat.id))
-                            .map((cat) => cat.name) || []
-                        ).join(', ')
-                        return selectedNames
-                      }}
-                    >
-                      {categoriesData?.results?.map((category) => (
-                        <MenuItem key={category.id} value={category.id}>
-                          <Checkbox
-                            checked={field.value.includes(category.id)}
-                          />
-                          <ListItemText primary={category.name} />
+                    <Select {...field} label="Brand" disabled={isLoadingBrands}>
+                      {brands.map((brand) => (
+                        <MenuItem key={brand.id} value={brand.label}>
+                          {brand.label}
                         </MenuItem>
                       ))}
                     </Select>
                   )}
                 />
-                {errors.categoryIds && (
-                  <FormHelperText>
-                    {Array.isArray(errors.categoryIds)
-                      ? errors.categoryIds[0]?.message
-                      : errors.categoryIds.message}
-                  </FormHelperText>
+                {errors.brand && (
+                  <FormHelperText>{errors.brand.message}</FormHelperText>
                 )}
               </FormControl>
             </Grid>
@@ -298,49 +287,421 @@ const CreateUpdateProductPage = () => {
               <TextField
                 {...register('description')}
                 label="Description"
-                placeholder="Enter description"
                 multiline
-                rows={6}
+                rows={4}
                 fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <FormControl fullWidth error={!!errors.valueCategoryIds}>
+                <InputLabel>Categories</InputLabel>
+                <Controller
+                  name="valueCategoryIds"
+                  control={control}
+                  defaultValue={[]}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      label="Categories"
+                      disabled={isLoadingCategories}
+                      input={<OutlinedInput label="Categories" />}
+                      value={field.value ? JSON.stringify(field.value) : ''}
+                      onChange={(event) => {
+                        const selectedPathString = event.target.value as string
+                        if (selectedPathString) {
+                          const selectedPath = JSON.parse(
+                            selectedPathString
+                          ) as string[]
+                          field.onChange(selectedPath)
+                        } else {
+                          field.onChange([])
+                        }
+                      }}
+                      renderValue={(selectedPathString) => {
+                        if (!selectedPathString) {
+                          return <em>Chọn danh mục...</em>
+                        }
+                        try {
+                          const selectedPath = JSON.parse(
+                            selectedPathString as string
+                          )
+                          const category = leafCategories.find(
+                            (c) =>
+                              JSON.stringify(c.path) ===
+                              JSON.stringify(selectedPath)
+                          )
+                          return category?.label || 'Select category'
+                        } catch {
+                          return 'Invalid selection'
+                        }
+                      }}
+                    >
+                      {leafCategories.map((cat) => {
+                        return (
+                          <MenuItem
+                            key={cat.valueId}
+                            value={JSON.stringify(cat.path)}
+                          >
+                            <ListItemText primary={cat.label} />
+                          </MenuItem>
+                        )
+                      })}
+                    </Select>
+                  )}
+                />
+                {errors.valueCategoryIds && (
+                  <FormHelperText>
+                    {errors.valueCategoryIds.message}
+                  </FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+          </Grid>
+        </SectionPaper>
+
+        <SectionPaper>
+          <SectionTitle>Details & Media</SectionTitle>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <TextField
+                {...register('weight')}
+                label="Weight (g)"
+                type="number"
+                fullWidth
+                error={!!errors.weight}
+                helperText={errors.weight?.message}
+              />
+            </Grid>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <TextField
+                {...register('height')}
+                label="Height (cm)"
+                type="number"
+                fullWidth
+                error={!!errors.height}
+                helperText={errors.height?.message}
+              />
+            </Grid>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <TextField
+                {...register('length')}
+                label="Length (cm)"
+                type="number"
+                fullWidth
+                error={!!errors.length}
+                helperText={errors.length?.message}
+              />
+            </Grid>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <TextField
+                {...register('width')}
+                label="Width (cm)"
+                type="number"
+                fullWidth
+                error={!!errors.width}
+                helperText={errors.width?.message}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name="manufactureDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker
+                    label="Manufacture Date"
+                    value={field.value ? dayjs(field.value) : null}
+                    onChange={(date) => field.onChange(date?.toDate())}
+                    sx={{ width: '100%' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name="expirationDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker
+                    label="Expiration Date"
+                    value={field.value ? dayjs(field.value) : null}
+                    onChange={(date) => field.onChange(date?.toDate())}
+                    sx={{ width: '100%' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Controller
+                name="videoFile"
+                control={control}
+                render={({ field }) => (
+                  <Box>
+                    {field.value ? (
+                      <ImagePreviewBox>
+                        <StyledAvatar
+                          variant="rounded"
+                          onClick={() =>
+                            field.value && handlePreview(field.value)
+                          }
+                        >
+                          <VideoThumbnail file={field.value} />
+                        </StyledAvatar>
+                        <Tooltip
+                          title={field.value.name}
+                          placement="top"
+                          arrow
+                          followCursor
+                        >
+                          <StyledVideoName variant="caption" noWrap>
+                            {field.value.name}
+                          </StyledVideoName>
+                        </Tooltip>
+                        <RemoveImageButton
+                          size="small"
+                          onClick={() => {
+                            setValue('videoFile', undefined)
+                            setVideoUrl(null)
+                          }}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </RemoveImageButton>
+                      </ImagePreviewBox>
+                    ) : videoUrl ? (
+                      <ImagePreviewBox>
+                        <StyledAvatar
+                          variant="rounded"
+                          onClick={() => window.open(videoUrl, '_blank')}
+                        >
+                          <video
+                            src={videoUrl}
+                            width="150"
+                            height="150"
+                            style={{ objectFit: 'cover' }}
+                          />
+                        </StyledAvatar>
+                        <RemoveImageButton
+                          size="small"
+                          onClick={() => setVideoUrl(null)}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </RemoveImageButton>
+                      </ImagePreviewBox>
+                    ) : (
+                      <FileUploader
+                        label="Add Video"
+                        accept="video/*"
+                        icon={<VideoCallIcon />}
+                        onFileSelect={(files) =>
+                          setValue('videoFile', files[0], {
+                            shouldValidate: true,
+                          })
+                        }
+                      />
+                    )}
+                  </Box>
+                )}
               />
             </Grid>
           </Grid>
         </SectionPaper>
 
         <SectionPaper>
-          <SectionTitle>Product Variant</SectionTitle>
-          {variantFields.map((variant, variantIndex) => (
-            <VariantPaper key={variant.id}>
-              {variantFields.length > 1 && (
-                <Stack direction="row" justifyContent="flex-end">
-                  <RemoveButton
-                    color="error"
-                    onClick={() => removeVariant(variantIndex)}
-                  >
-                    <CloseIcon />
-                  </RemoveButton>
-                </Stack>
-              )}
-              <ProductVariantForm
-                variantIndex={variantIndex}
-                control={control}
-                register={register}
-                errors={errors}
-                setValue={setValue}
-                onPreview={handlePreview}
-              />
-            </VariantPaper>
-          ))}
+          <SectionTitle>Variants</SectionTitle>
+          <Stack spacing={3}>
+            {variantFields.map((variant, index) => (
+              <VariantPaper key={variant.id}>
+                {variantFields.length > 1 && (
+                  <Stack direction="row" justifyContent="flex-end">
+                    <RemoveButton
+                      color="error"
+                      onClick={() => removeVariant(index)}
+                    >
+                      <CloseIcon />
+                    </RemoveButton>
+                  </Stack>
+                )}
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      {...register(`productVariants.${index}.price`)}
+                      label="Price"
+                      type="number"
+                      fullWidth
+                      error={!!errors.productVariants?.[index]?.price}
+                      helperText={
+                        errors.productVariants?.[index]?.price?.message
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      {...register(`productVariants.${index}.stock`)}
+                      label="Stock"
+                      type="number"
+                      fullWidth
+                      error={!!errors.productVariants?.[index]?.stock}
+                      helperText={
+                        errors.productVariants?.[index]?.stock?.message
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      {...register(`productVariants.${index}.discount`)}
+                      label="Discount (%)"
+                      type="number"
+                      fullWidth
+                      error={!!errors.productVariants?.[index]?.discount}
+                      helperText={
+                        errors.productVariants?.[index]?.discount?.message
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <FormControl
+                      fullWidth
+                      error={!!errors.productVariants?.[index]?.valueIds}
+                    >
+                      <InputLabel>Properties</InputLabel>
+                      <Controller
+                        name={`productVariants.${index}.valueIds`}
+                        control={control}
+                        defaultValue={[]}
+                        render={({ field }) => (
+                          <Select
+                            {...field}
+                            multiple
+                            label="Properties"
+                            disabled={isLoadingProperties}
+                            input={<OutlinedInput label="Properties" />}
+                            renderValue={(selected) => (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  flexWrap: 'wrap',
+                                  gap: 0.5,
+                                }}
+                              >
+                                {productProperties
+                                  .filter((p) => selected.includes(p.id))
+                                  .map((p) => (
+                                    <Chip key={p.id} label={p.label} />
+                                  ))}
+                              </Box>
+                            )}
+                          >
+                            {productProperties.map((prop) => (
+                              <MenuItem key={prop.id} value={prop.id}>
+                                <Checkbox
+                                  checked={field.value.includes(prop.id)}
+                                />
+                                <ListItemText primary={prop.label} />
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        )}
+                      />
+                      {errors.productVariants?.[index]?.valueIds && (
+                        <FormHelperText>
+                          {errors.productVariants?.[index]?.valueIds?.message}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Controller
+                      name={`productVariants.${index}.isActive`}
+                      control={control}
+                      render={({ field }) => (
+                        <FormControlLabel
+                          control={<Switch {...field} checked={field.value} />}
+                          label="Active Variant"
+                        />
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
+                      Variant Images
+                    </Typography>
+                    <Controller
+                      name={`productVariants.${index}.productImages`}
+                      control={control}
+                      render={({ field }) => (
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          gap={2}
+                          flexWrap="wrap"
+                        >
+                          {(field.value || []).map((file, imgIndex) => {
+                            const isFileObject = file instanceof File
+                            const imageUrl = isFileObject
+                              ? URL.createObjectURL(file)
+                              : (file as { url: string }).url
+
+                            return (
+                              <ImagePreviewBox
+                                key={imgIndex}
+                                onClick={() => handlePreview(file)}
+                              >
+                                <StyledAvatar
+                                  src={imageUrl}
+                                  variant="rounded"
+                                />
+                                <RemoveImageButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    const updated = [...(field.value || [])]
+                                    updated.splice(imgIndex, 1)
+                                    setValue(
+                                      `productVariants.${index}.productImages`,
+                                      updated
+                                    )
+                                  }}
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </RemoveImageButton>
+                              </ImagePreviewBox>
+                            )
+                          })}
+                          <FileUploader
+                            label="Add Image"
+                            accept="image/*"
+                            multiple
+                            icon={<AddPhotoAlternateIcon />}
+                            onFileSelect={(files) =>
+                              setValue(
+                                `productVariants.${index}.productImages`,
+                                [...(field.value || []), ...files],
+                                { shouldValidate: true }
+                              )
+                            }
+                          />
+                        </Stack>
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              </VariantPaper>
+            ))}
+          </Stack>
           <Stack direction="row" justifyContent="flex-end">
             <AddVariantButton
               variant="outlined"
               onClick={() =>
                 appendVariant({
-                  variantName: '',
-                  price: 0,
-                  productItems: [
-                    { stock: 0, originalPrice: 0, weight: 0, images: [] },
-                  ],
+                  price: '0',
+                  discount: '0',
+                  stock: '0',
+                  isActive: true,
+                  productImages: [],
+                  valueIds: [],
                 })
               }
             >
@@ -350,20 +711,24 @@ const CreateUpdateProductPage = () => {
         </SectionPaper>
 
         <ActionButtonsContainer direction="row" spacing={2}>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/products')}
-            sx={{ width: 150 }}
-          >
+          <Button variant="outlined" onClick={() => navigate('/products')}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained" sx={{ width: 150 }}>
-            Create Product
+          <Button type="submit" variant="contained" disabled={isPending}>
+            {isPending
+              ? isEditMode
+                ? 'Updating...'
+                : 'Creating...'
+              : isEditMode
+                ? 'Update Product'
+                : 'Create Product'}
           </Button>
         </ActionButtonsContainer>
       </form>
-
-      <PreviewDialog file={previewFile} onClose={handleClosePreview} />
+      <PreviewDialog
+        file={previewFile instanceof File ? previewFile : null}
+        onClose={handleClosePreview}
+      />
     </FormWrapper>
   )
 }

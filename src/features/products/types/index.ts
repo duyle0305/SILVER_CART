@@ -1,56 +1,66 @@
-import type { SortType } from '@/constants'
-import type { ProductType } from '@/features/products/constants'
-
-export interface productCategory {
+export interface ProductCategoryBrief {
   id: string
-  categoryName: string
+  code: string
+  description: string
+  label: string
+  type: number
+  listOfValueId: string
 }
 
-export interface ProductImage {
+export interface ProductListItem {
   id: string
-  imagePath: string
-  imageName: string
+  name: string
+  brand: string
+  price: number
+  description: string
+  imageUrl: string
+  categories: ProductCategoryBrief[]
 }
 
-export interface ProductItem {
+export interface ProductSearchBody {
+  keyword?: string
+  categoryIds?: string[]
+  minPrice?: number
+  maxPrice?: number
+  sortBy?: string
+  sortDirection?: boolean
+  page: number
+  pageSize: number
+}
+
+export interface ProductVariantValue {
   id: string
-  sku: string
-  originalPrice: number
-  discountedPrice: number
-  weight: number
+  valueId: string
+  valueCode: string
+  valueLabel: string
+}
+
+export interface ProductVariantDetail {
+  id: string
+  price: number
+  discount: number
   stock: number
   isActive: boolean
-  productImages: ProductImage[]
+  productVariantValues: ProductVariantValue[]
 }
 
-export interface ProductVariant {
+export interface ProductDetail {
   id: string
-  variantName: string
-  isActive: boolean
-  productItems: ProductItem[]
-}
-
-export interface ProductData {
-  id: string
-  productName: string
-  description: string
+  name: string
+  brand: string
+  description: string | null
   videoPath: string
-  productType: ProductType
-  creationDate: string
-  productCategories: productCategory[]
-  variants: ProductVariant[]
+  weight: string
+  height: string
+  length: string
+  width: string
+  manufactureDate: string
+  expirationDate: string
+  categories: ProductCategoryBrief[]
+  productVariants: ProductVariantDetail[]
 }
 
-export interface ProductQueryParams {
-  'PagingRequest.Page'?: number
-  'PagingRequest.PageSize'?: number
-  'PagingRequest.SortType'?: SortType
-  'PagingRequest.ColName'?: string
-  ProductName?: string
-  ProductType?: string
-}
-
-export interface ProductDataParam {
+export interface CreateProductPayload {
   name: string
   brand: string
   description: string
@@ -72,4 +82,13 @@ export interface ProductDataParam {
     }[]
     valueIds: string[]
   }[]
+}
+
+export interface ProductProperty {
+  id: string
+  code: string
+  description: string
+  label: string
+  type: number
+  listOfValueId: string
 }

@@ -1,26 +1,52 @@
 import { apiClient } from '@/lib/axios'
 import type {
-  ProductData,
-  ProductDataParam,
-  ProductQueryParams,
+  ProductListItem,
+  ProductSearchBody,
+  ProductDetail,
+  CreateProductPayload,
+  ProductProperty,
 } from '@/features/products/types'
 import type { BaseResponse } from '@/types/baseResponse.type'
 
-export const fetchProducts = async (
-  params: ProductQueryParams,
+export const searchProducts = async (
+  body: ProductSearchBody,
   signal: AbortSignal
-): Promise<BaseResponse<ProductData>> => {
-  const response = await apiClient.get<BaseResponse<ProductData>>(
-    'Product/GetAll',
+): Promise<BaseResponse<ProductListItem>> => {
+  const response = await apiClient.post<BaseResponse<ProductListItem>>(
+    'Product/Search',
+    body,
     {
-      params,
       signal,
     }
   )
   return response
 }
 
-export const createProduct = async (data: ProductDataParam) => {
-  const response = await apiClient.post('Product/Create', data)
+export const fetchProductById = async (
+  productId: string,
+  signal: AbortSignal
+): Promise<ProductDetail> => {
+  const response = await apiClient.get<ProductDetail>(
+    `Product/GetById/${productId}`,
+    { signal }
+  )
   return response
+}
+
+export const createProduct = async (data: CreateProductPayload) => {
+  await apiClient.post('Product/Create', data)
+}
+
+export const getAllValueProductProperty = async (
+  signal: AbortSignal
+): Promise<ProductProperty[]> => {
+  const response = await apiClient.get<ProductProperty[]>(
+    'ProductProperty/GetAllValueProductProperty',
+    { signal }
+  )
+  return response
+}
+
+export const updateProduct = async (id: string, data: CreateProductPayload) => {
+  await apiClient.put(`Product/Update/${id}`, data)
 }

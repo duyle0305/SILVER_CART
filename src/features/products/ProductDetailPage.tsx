@@ -8,8 +8,14 @@ import {
   Paper,
   Stack,
   Typography,
+  Chip,
+  Skeleton,
 } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useProductDetail } from './hooks/useProductDetail'
+import { useNotification } from '@/hooks/useNotification'
+import { useEffect } from 'react'
+import dayjs from 'dayjs'
 
 const DetailItem = ({
   label,
@@ -18,13 +24,13 @@ const DetailItem = ({
   label: string
   value: React.ReactNode
 }) => (
-  <Grid container spacing={2} sx={{ mb: 2 }}>
-    <Grid size={{ xs: 4 }}>
+  <Grid container spacing={2} sx={{ mb: 1.5 }}>
+    <Grid size={{ xs: 4, sm: 3 }}>
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
     </Grid>
-    <Grid size={{ xs: 8 }}>
+    <Grid size={{ xs: 8, sm: 9 }}>
       <Typography variant="body2" fontWeight="medium">
         {value}
       </Typography>
@@ -34,10 +40,37 @@ const DetailItem = ({
 
 function ProductDetailPage() {
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
+  const { showNotification } = useNotification()
+  const { data: product, isLoading, error } = useProductDetail(id!)
+
+  useEffect(() => {
+    if (error) {
+      showNotification(
+        error.message || 'Failed to load product details.',
+        'error'
+      )
+    }
+  }, [error, showNotification])
 
   const onEdit = () => {
     navigate(`/products/edit/${id}`)
+  }
+
+  if (isLoading) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Skeleton variant="rectangular" height={500} />
+      </Paper>
+    )
+  }
+
+  if (!product) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h5">Product not found.</Typography>
+      </Paper>
+    )
   }
 
   return (
@@ -49,7 +82,7 @@ function ProductDetailPage() {
         sx={{ mb: 2 }}
       >
         <Typography variant="h5" fontWeight="bold">
-          Product information
+          Product Information
         </Typography>
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" color="error" startIcon={<DeleteIcon />}>
@@ -63,48 +96,84 @@ function ProductDetailPage() {
       <Divider sx={{ mb: 3 }} />
 
       <Grid container spacing={4}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <CardMedia
-            component="img"
-            image="https://via.placeholder.com/400x400.png?text=Product+Image"
-            alt="Vinamilk Fresh Milk"
-            sx={{ borderRadius: 2, width: '100%' }}
-          />
-        </Grid>
+        {product.videoPath && (
+          <Grid size={{ xs: 12, md: 4 }}>
+            <CardMedia
+              component="video"
+              controls
+              src={product.videoPath}
+              sx={{ borderRadius: 2, width: '100%', mb: 2 }}
+            />
+          </Grid>
+        )}
 
         <Grid size={{ xs: 12, md: 8 }}>
           <Typography variant="h4" gutterBottom>
-            Vinamilk Fresh Milk
+            {product.name}
           </Typography>
+          <DetailItem label="Brand" value={product.brand} />
           <DetailItem
             label="Description"
-            value="Vinamilk Fresh Milk is a high-quality dairy product made from 100% fresh cow's milk, sourced from modern farms in Vietnam."
+            value={product.description || 'N/A'}
           />
-          <DetailItem label="Product type" value="Pasteurized Milk" />
-          <DetailItem label="Category" value="Drinking Milk" />
-          <DetailItem label="Stock" value="5,000" />
-          <DetailItem label="Original price" value="35,000 VND" />
-          <DetailItem label="Discount price" value="30,000 VND" />
-          <DetailItem label="Weight" value="180ml" />
           <DetailItem
-            label="Video"
+            label="Categories"
             value={
-              <Stack direction="row" spacing={1}>
-                <CardMedia
-                  component="img"
-                  image="https://via.placeholder.com/100x100.png?text=Video+1"
-                  sx={{ width: 100, height: 100, borderRadius: 1 }}
-                />
-                <CardMedia
-                  component="img"
-                  image="https://via.placeholder.com/100x100.png?text=Video+2"
-                  sx={{ width: 100, height: 100, borderRadius: 1 }}
-                />
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                {product.categories.map((cat) => (
+                  <Chip key={cat.id} label={cat.label} size="small" />
+                ))}
               </Stack>
             }
           />
+          <DetailItem
+            label="Manufacture Date"
+            value={dayjs(product.manufactureDate).format('DD/MM/YYYY')}
+          />
+          <DetailItem
+            label="Expiration Date"
+            value={dayjs(product.expirationDate).format('DD/MM/YYYY')}
+          />
+          <DetailItem
+            label="Dimensions"
+            value={`W:${product.width} x H:${product.height} x L:${product.length} (cm)`}
+          />
+          <DetailItem label="Weight" value={`${product.weight} g`} />
         </Grid>
       </Grid>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+        Variants
+      </Typography>
+
+      <Stack spacing={2}>
+        {product.productVariants.map((variant) => (
+          <Paper key={variant.id} variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              {variant.productVariantValues
+                .map((v) => v.valueLabel)
+                .join(' - ')}
+            </Typography>
+            <DetailItem
+              label="Price"
+              value={`${variant.price.toLocaleString()} VND`}
+            />
+            <DetailItem label="Stock" value={variant.stock} />
+            <DetailItem
+              label="Status"
+              value={
+                variant.isActive ? (
+                  <Chip label="Active" color="success" size="small" />
+                ) : (
+                  <Chip label="Inactive" color="default" size="small" />
+                )
+              }
+            />
+          </Paper>
+        ))}
+      </Stack>
     </Paper>
   )
 }

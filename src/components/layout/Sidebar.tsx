@@ -5,18 +5,20 @@ import {
   StyledNavItem,
   StyledNavList,
 } from '@/components/layout/styles/Sidebar.styles'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { Role } from '@/features/authentication/constants'
 import { useLogoutConfirmation } from '@/features/authentication/hooks/useLogoutConfirmation'
+import CategoryIcon from '@mui/icons-material/Category'
 import DashboardIcon from '@mui/icons-material/Dashboard'
+import ChatIcon from '@mui/icons-material/Forum'
+import InventoryIcon from '@mui/icons-material/Inventory'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PeopleIcon from '@mui/icons-material/People'
 import SettingsIcon from '@mui/icons-material/Settings'
-import InventoryIcon from '@mui/icons-material/Inventory'
-import ChatIcon from '@mui/icons-material/Forum'
+import StorefrontIcon from '@mui/icons-material/Storefront'
 import { ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Role } from '@/features/authentication/constants'
-import { useAuthContext } from '@/contexts/AuthContext'
 
 const Sidebar = () => {
   const { openLogoutConfirmationDialog } = useLogoutConfirmation()
@@ -42,6 +44,12 @@ const Sidebar = () => {
         items: [
           { text: 'Users', icon: <PeopleIcon />, path: '/users' },
           { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+          {
+            text: 'Categories',
+            icon: <CategoryIcon />,
+            path: '/categories',
+          },
+          { text: 'Brands', icon: <StorefrontIcon />, path: '/brands' },
         ],
       })
     }

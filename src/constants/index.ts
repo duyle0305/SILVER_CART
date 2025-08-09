@@ -1,5 +1,4 @@
 export enum SortType {
-  Default = 'Default',
-  Ascending = 'Ascending',
-  Descending = 'Descending',
+  Ascending = 0,
+  Descending = 1,
 }

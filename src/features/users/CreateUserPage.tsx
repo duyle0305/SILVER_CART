@@ -24,6 +24,7 @@ import {
 import { useForm, Controller } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { isAxiosError } from 'axios'
 
 const CreateUserPage = () => {
   const navigate = useNavigate()
@@ -56,11 +57,16 @@ const CreateUserPage = () => {
         showNotification('User created successfully!', 'success')
         navigate('/users')
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onError: (error: any) => {
-        const apiError =
-          error?.response?.data?.message || 'Failed to create user.'
-        setErrorMessage(apiError)
+      onError: (error) => {
+        if (isAxiosError(error) && error.response) {
+          const apiError =
+            error.response.data?.errors?.[0] ||
+            error.response.data?.message ||
+            'An unexpected API error occurred.'
+          setErrorMessage(apiError)
+        } else {
+          setErrorMessage('Failed to create user. Please try again.')
+        }
       },
     })
   }
@@ -79,6 +85,7 @@ const CreateUserPage = () => {
               </Alert>
             </Grid>
           )}
+
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               {...register('fullName')}
@@ -101,6 +108,7 @@ const CreateUserPage = () => {
             <TextField
               {...register('email')}
               label="Email"
+              type="email"
               fullWidth
               error={!!errors.email}
               helperText={errors.email?.message}

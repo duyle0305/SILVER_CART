@@ -19,6 +19,17 @@ const CreateUpdateProductPage = lazy(
   () => import('@/features/products/CreateUpdateProductPage')
 )
 const ChatPage = lazy(() => import('@/features/chat/ChatPage'))
+const ListCategoryPage = lazy(
+  () => import('@/features/categories/ListCategoryPage')
+)
+const CreateRootCategoryPage = lazy(
+  () => import('@/features/categories/CreateRootCategoryPage')
+)
+const CreateSubCategoryPage = lazy(
+  () => import('@/features/categories/CreateSubCategoryPage')
+)
+const ListBrandPage = lazy(() => import('@/features/brands/ListBrandPage'))
+const CreateBrandPage = lazy(() => import('@/features/brands/CreateBrandPage'))
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +45,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppLayout />,
     children: [
+      // Dashboard
       {
         index: true,
         element: (
@@ -45,6 +57,7 @@ export const router = createBrowserRouter([
           title: 'Dashboard',
         },
       },
+      // Users
       {
         path: 'users',
         element: (
@@ -76,6 +89,7 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Products
       {
         path: 'products',
         handle: {
@@ -129,6 +143,39 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Categories
+      {
+        path: 'categories',
+        element: (
+          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+            <Outlet />
+          </AuthGuard>
+        ),
+        handle: {
+          title: 'Category Management',
+        },
+        children: [
+          {
+            index: true,
+            element: <ListCategoryPage />,
+          },
+          {
+            path: 'add-root',
+            element: <CreateRootCategoryPage />,
+            handle: {
+              title: 'Create Root Category',
+            },
+          },
+          {
+            path: 'add-sub',
+            element: <CreateSubCategoryPage />,
+            handle: {
+              title: 'Create Sub-Category',
+            },
+          },
+        ],
+      },
+      // Chat
       {
         path: 'chat',
         element: (
@@ -139,6 +186,31 @@ export const router = createBrowserRouter([
         handle: {
           title: 'Chat Box',
         },
+      },
+      // Brands
+      {
+        path: 'brands',
+        element: (
+          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+            <Outlet />
+          </AuthGuard>
+        ),
+        handle: {
+          title: 'Brand Management',
+        },
+        children: [
+          {
+            index: true,
+            element: <ListBrandPage />,
+          },
+          {
+            path: 'add',
+            element: <CreateBrandPage />,
+            handle: {
+              title: 'Create Brand',
+            },
+          },
+        ],
       },
     ],
   },

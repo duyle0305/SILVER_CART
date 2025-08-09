@@ -24,6 +24,8 @@ interface BaseTableProps<T extends { id: string | number }> {
   renderRow: (item: T, isSelected: boolean, index: number) => ReactNode
   showCheckbox?: boolean
   allowModify?: boolean
+  isSortable?: boolean
+  showPagination?: boolean
 }
 
 export function BaseTable<T extends { id: string | number }>({
@@ -36,6 +38,8 @@ export function BaseTable<T extends { id: string | number }>({
   renderRow,
   showCheckbox,
   allowModify = true,
+  isSortable = true,
+  showPagination = true,
 }: BaseTableProps<T>) {
   return (
     <Paper sx={{ width: '100%', mb: 2 }}>
@@ -57,6 +61,7 @@ export function BaseTable<T extends { id: string | number }>({
             headCells={headCells}
             showCheckbox={showCheckbox}
             allowModify={allowModify}
+            isSortable={isSortable}
           />
           <TableBody>
             {isLoading ? (
@@ -86,7 +91,7 @@ export function BaseTable<T extends { id: string | number }>({
         </Table>
       </TableContainer>
       <Stack alignItems="center" sx={{ py: 2 }}>
-        {data.length > 0 && (
+        {showPagination && data.length > 0 && (
           <Pagination
             count={pageCount}
             page={table.page + 1}

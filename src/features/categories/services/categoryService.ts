@@ -1,14 +1,61 @@
-import type { Category, CategoryQueryParams } from '@/features/categories/types'
+import type {
+  Category,
+  CategoryNoValue,
+  CategoryRootCreateBodyParam,
+  LeafNodesWithPaths,
+  LinkCategoryWithSubCategoryBodyParam,
+  SubCategoryCreateBodyParam,
+} from '@/features/categories/types'
 import { apiClient } from '@/lib/axios'
-import type { BaseResponse } from '@/types/baseResponse.type'
 
-export const fetchCategories = async (
-  params: CategoryQueryParams,
+export const getCategories = async (
   signal: AbortSignal
-): Promise<BaseResponse<Category>> => {
-  const response = await apiClient.get<BaseResponse<Category>>('Category', {
-    params,
+): Promise<Category[]> => {
+  const response = await apiClient.get<Category[]>('Category/GetListCategory', {
     signal,
   })
   return response
+}
+
+export const getLeafNodesWithPaths = async (
+  signal: AbortSignal
+): Promise<LeafNodesWithPaths[]> => {
+  const response = await apiClient.get<LeafNodesWithPaths[]>(
+    'Category/GetLeafNodesWithPaths',
+    {
+      signal,
+    }
+  )
+
+  return response
+}
+
+export const getListCategoryNoValue = async (
+  signal: AbortSignal
+): Promise<CategoryNoValue[]> => {
+  const response = await apiClient.get<CategoryNoValue[]>(
+    'Category/GetListCategoryNoValue',
+    {
+      signal,
+    }
+  )
+  return response
+}
+
+export const createNewSubCategory = async (
+  data: SubCategoryCreateBodyParam
+): Promise<void> => {
+  await apiClient.post('Category/CreateNewSubCategory', data)
+}
+
+export const createValueOfCategoryRoot = async (
+  data: CategoryRootCreateBodyParam[]
+): Promise<void> => {
+  await apiClient.post('Category/CreateValueOfCategoryRoot', data)
+}
+
+export const linkCategoryWithSubCategory = async (
+  data: LinkCategoryWithSubCategoryBodyParam
+): Promise<void> => {
+  await apiClient.put('Category/LinkCategoryWithSubCategory', data)
 }

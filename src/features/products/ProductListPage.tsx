@@ -4,53 +4,62 @@ import ProductTableToolbar, {
   type ProductFilters,
 } from '@/features/products/components/ProductTableToolbar'
 import { useProducts } from '@/features/products/hooks/useProducts'
-import { ProductType } from '@/features/products/constants'
-import type { ProductData } from '@/features/products/types'
+import type { ProductListItem } from '@/features/products/types'
 import { StyledTableRow } from '@/features/users/components/styles/UserTable.styles'
 import { useNotification } from '@/hooks/useNotification'
 import { useTable } from '@/hooks/useTable'
 import BorderColorIcon from '@mui/icons-material/BorderColor'
-import { Box, IconButton, TableCell } from '@mui/material'
+import {
+  Box,
+  IconButton,
+  TableCell,
+  Avatar,
+  Typography,
+  Stack,
+  Tooltip,
+} from '@mui/material'
 import { useDebounce } from 'ahooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Role } from '../authentication/constants'
 import { useAuthContext } from '@/contexts/AuthContext'
+import { Role } from '@/features/authentication/constants'
+import { SortType } from '@/constants'
 
-const productHeadCells: readonly HeadCell<ProductData>[] = [
-  { id: 'productName', label: 'Name' },
-  { id: 'productType', label: 'Product Type' },
-  { id: 'category', label: 'Category' },
+const productHeadCells: readonly HeadCell<ProductListItem>[] = [
+  { id: 'name', label: 'Product' },
+  { id: 'brand', label: 'Brand' },
+  { id: 'price', label: 'Price' },
+  { id: 'categories', label: 'Categories' },
 ]
 
 function ProductListPage() {
   const navigate = useNavigate()
+  const table = useTable<ProductListItem>({ initialOrderBy: 'name' })
+  const { user } = useAuthContext()
   const [filters, setFilters] = useState<ProductFilters>({
     keyword: '',
-    productType: ProductType.ALL,
+    categoryIds: [],
+    minPrice: '',
+    maxPrice: '',
   })
-  const { user } = useAuthContext()
-  const userRole = user?.role
+  const debouncedKeyword = useDebounce(filters.keyword, { wait: 500 })
 
-  const allowModifyProduct = useMemo(() => {
-    return userRole === Role.ADMIN || userRole === Role.SUPER_ADMIN
-  }, [userRole])
-
-  const debounceKeyword = useDebounce(filters.keyword, { wait: 500 })
-  const table = useTable<ProductData>({ initialOrderBy: 'productName' })
   const { data, isLoading, error } = useProducts({
-    keyword: debounceKeyword,
-    order: table.order,
-    orderBy: table.orderBy,
-    page: table.page,
+    page: table.page + 1,
     pageSize: table.rowsPerPage,
-    productType: filters.productType,
+    keyword: debouncedKeyword || undefined,
+    categoryIds:
+      filters.categoryIds.length > 0 ? filters.categoryIds : undefined,
+    minPrice: filters.minPrice === '' ? undefined : Number(filters.minPrice),
+    maxPrice: filters.maxPrice === '' ? undefined : Number(filters.maxPrice),
+    sortBy: table.orderBy as string,
+    sortDirection: table.order === SortType.Ascending,
   })
 
   const { showNotification } = useNotification()
 
   const handleFiltersChange = useCallback(
-    (name: keyof ProductFilters, value: string) => {
+    (name: keyof ProductFilters, value: unknown) => {
       setFilters((prev) => ({ ...prev, [name]: value }))
       table.setFilterPage(0)
     },
@@ -63,46 +72,54 @@ function ProductListPage() {
     [data]
   )
 
-  const updateProduct = useCallback(
-    (id: string) => {
-      navigate(`edit/${id}`)
-    },
-    [navigate]
-  )
+  const onRowClick = useCallback((id: string) => navigate(id), [navigate])
 
   useEffect(() => {
     if (error) {
-      const errorMessage = error.message || 'Failed to load products data.'
-      showNotification(errorMessage, 'error')
+      showNotification(error.message || 'Failed to load products.', 'error')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [error])
+  }, [error, showNotification])
 
   const renderProductRow = (
-    product: ProductData,
+    product: ProductListItem,
     _: boolean,
     index: number
   ) => (
-    <StyledTableRow key={product.id} hover>
+    <StyledTableRow
+      key={product.id}
+      hover
+      onClick={() => onRowClick(product.id)}
+    >
       <TableCell>{table.page * table.rowsPerPage + index + 1}</TableCell>
-      <TableCell>{product.productName}</TableCell>
-      <TableCell>{product.productType}</TableCell>
       <TableCell>
-        {product.productCategories
-          .map((productCategory) => productCategory.categoryName)
-          .join(',')}
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Avatar src={product.imageUrl} variant="rounded" />
+          <Typography variant="subtitle2" noWrap sx={{ maxWidth: 300 }}>
+            {product.name}
+          </Typography>
+        </Stack>
       </TableCell>
-      {allowModifyProduct && (
-        <TableCell>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => updateProduct(product.id)}
-          >
-            <BorderColorIcon fontSize="small" />
-          </IconButton>
-        </TableCell>
-      )}
+      <TableCell>{product.brand}</TableCell>
+      <TableCell>{product.price.toLocaleString()} VND</TableCell>
+      <TableCell>
+        <Tooltip title={product.categories.map((cat) => cat.label).join(', ')}>
+          <Typography noWrap sx={{ maxWidth: 200 }}>
+            {product.categories.map((cat) => cat.label).join(', ')}
+          </Typography>
+        </Tooltip>
+      </TableCell>
+      <TableCell>
+        <IconButton
+          size="small"
+          color="primary"
+          onClick={(e) => {
+            e.stopPropagation()
+            navigate(`/products/edit/${product.id}`)
+          }}
+        >
+          <BorderColorIcon fontSize="small" />
+        </IconButton>
+      </TableCell>
     </StyledTableRow>
   )
 
@@ -113,7 +130,6 @@ function ProductListPage() {
         headCells={productHeadCells}
         isLoading={isLoading}
         pageCount={pageCount}
-        showCheckbox={false}
         table={table}
         toolbar={
           <ProductTableToolbar
@@ -122,7 +138,10 @@ function ProductListPage() {
           />
         }
         renderRow={renderProductRow}
-        allowModify={allowModifyProduct}
+        showCheckbox={false}
+        allowModify={
+          user?.role === Role.ADMIN || user?.role === Role.SUPER_ADMIN
+        }
       />
     </Box>
   )

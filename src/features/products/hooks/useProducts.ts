@@ -1,37 +1,11 @@
-import type { SortType } from '@/constants'
-import { fetchProducts } from '@/features/products/services/productService'
-import type { ProductQueryParams } from '@/features/products/types'
 import { useQuery } from '@tanstack/react-query'
+import { searchProducts } from '../services/productService'
+import type { ProductSearchBody } from '../types'
 
-interface UseProductsParams {
-  page: number
-  pageSize: number
-  order: SortType
-  orderBy: string
-  keyword: string
-  productType?: string
-}
-
-export function useProducts({
-  page,
-  pageSize,
-  order,
-  orderBy,
-  keyword,
-  productType,
-}: UseProductsParams) {
-  const queryParams: ProductQueryParams = {
-    'PagingRequest.Page': page + 1,
-    'PagingRequest.PageSize': pageSize,
-    'PagingRequest.SortType': order,
-    'PagingRequest.ColName': orderBy,
-    ProductName: keyword,
-    ProductType: productType,
-  }
-
+export function useProducts(body: ProductSearchBody) {
   return useQuery({
-    queryKey: ['products', queryParams],
-    queryFn: ({ signal }) => fetchProducts(queryParams, signal),
+    queryKey: ['products', body],
+    queryFn: ({ signal }) => searchProducts(body, signal),
     refetchOnWindowFocus: false,
   })
 }
