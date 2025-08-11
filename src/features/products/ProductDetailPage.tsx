@@ -10,12 +10,15 @@ import {
   Typography,
   Chip,
   Skeleton,
+  Avatar,
 } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useProductDetail } from './hooks/useProductDetail'
 import { useNotification } from '@/hooks/useNotification'
 import { useEffect } from 'react'
 import dayjs from 'dayjs'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { authorizationAction } from '../authentication/constants'
 
 const DetailItem = ({
   label,
@@ -43,6 +46,11 @@ function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { showNotification } = useNotification()
   const { data: product, isLoading, error } = useProductDetail(id!)
+  const { user } = useAuthContext()
+  const allowModifyProducts =
+    (user?.role &&
+      authorizationAction.allowCreateProducts.includes(user.role)) ||
+    (user?.role && authorizationAction.allowUpdateProducts.includes(user.role))
 
   useEffect(() => {
     if (error) {
@@ -85,12 +93,24 @@ function ProductDetailPage() {
           Product Information
         </Typography>
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" color="error" startIcon={<DeleteIcon />}>
-            Delete
-          </Button>
-          <Button variant="contained" startIcon={<EditIcon />} onClick={onEdit}>
-            Edit
-          </Button>
+          {allowModifyProducts && (
+            <>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+              >
+                Delete
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={onEdit}
+              >
+                Edit
+              </Button>
+            </>
+          )}
         </Stack>
       </Stack>
       <Divider sx={{ mb: 3 }} />
@@ -151,26 +171,58 @@ function ProductDetailPage() {
       <Stack spacing={2}>
         {product.productVariants.map((variant) => (
           <Paper key={variant.id} variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              {variant.productVariantValues
-                .map((v) => v.valueLabel)
-                .join(' - ')}
-            </Typography>
-            <DetailItem
-              label="Price"
-              value={`${variant.price.toLocaleString()} VND`}
-            />
-            <DetailItem label="Stock" value={variant.stock} />
-            <DetailItem
-              label="Status"
-              value={
-                variant.isActive ? (
-                  <Chip label="Active" color="success" size="small" />
-                ) : (
-                  <Chip label="Inactive" color="default" size="small" />
-                )
-              }
-            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 8 }}>
+                <Typography variant="h6" gutterBottom>
+                  {variant.productVariantValues
+                    .map((v) => v.valueLabel)
+                    .join(' - ')}
+                </Typography>
+                <DetailItem
+                  label="Price"
+                  value={`${variant.price.toLocaleString()} VND`}
+                />
+                <DetailItem label="Stock" value={variant.stock} />
+                <DetailItem
+                  label="Status"
+                  value={
+                    variant.isActive ? (
+                      <Chip label="Active" color="success" size="small" />
+                    ) : (
+                      <Chip label="Inactive" color="default" size="small" />
+                    )
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Images
+                </Typography>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  useFlexGap
+                  flexWrap="wrap"
+                  sx={{ mt: 1 }}
+                >
+                  {variant.productImages.length > 0 ? (
+                    variant.productImages.map((image) => (
+                      <Avatar
+                        key={image.id}
+                        src={image.url}
+                        variant="rounded"
+                        style={{
+                          width: 64,
+                          height: 64,
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <Typography variant="caption">No images</Typography>
+                  )}
+                </Stack>
+              </Grid>
+            </Grid>
           </Paper>
         ))}
       </Stack>

@@ -7,6 +7,41 @@ export interface User {
   isVerified: boolean
 }
 
+export interface Address {
+  id: string
+  streetAddress: string
+  wardCode: string
+  wardName: string
+  districtID: number
+  districtName: string
+  provinceID: number
+  provinceName: string
+  phoneNumber: string
+}
+
+export interface UserDetail {
+  id: string
+  fullName: string
+  userName: string
+  email: string | null
+  avatar: string | null
+  gender: number
+  phoneNumber: string | null
+  birthDate: string
+  age: number
+  rewardPoint: number
+  description: string
+  relationShip: string
+  guardianId: string
+  roleId: string
+  roleName: string
+  addresses: Address[]
+  userPromotions: string[]
+  categoryLabels: string[]
+  cartCount: number
+  paymentCount: number
+}
+
 export interface UserBodyParam {
   roleId?: string
   searchTerm?: string

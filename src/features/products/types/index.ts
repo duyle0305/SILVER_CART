@@ -42,6 +42,10 @@ export interface ProductVariantDetail {
   stock: number
   isActive: boolean
   productVariantValues: ProductVariantValue[]
+  productImages: {
+    id: string
+    url: string
+  }[]
 }
 
 export interface ProductDetail {
@@ -82,13 +86,4 @@ export interface CreateProductPayload {
     }[]
     valueIds: string[]
   }[]
-}
-
-export interface ProductProperty {
-  id: string
-  code: string
-  description: string
-  label: string
-  type: number
-  listOfValueId: string
 }

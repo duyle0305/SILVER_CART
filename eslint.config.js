@@ -43,6 +43,7 @@ export default tseslint.config(
       ],
       'react/react-in-jsx-scope': 'off',
       'react/jsx-uses-react': 'off',
+      'no-explicit-any': 'warn',
     },
     settings: {
       react: {

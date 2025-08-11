@@ -5,7 +5,9 @@ const productVariantInputSchema = z.object({
   discount: z.string().min(1, 'Discount is required'),
   stock: z.string().min(1, 'Stock is required'),
   isActive: z.boolean(),
-  productImages: z.array(z.instanceof(File)).optional(),
+  productImages: z.array(
+    z.union([z.instanceof(File), z.object({ url: z.string().url() })])
+  ),
   valueIds: z.array(z.string()).min(1, 'Please select at least one property'),
 })
 

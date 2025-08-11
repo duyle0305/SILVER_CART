@@ -8,6 +8,7 @@ import {
 import { useAuthContext } from '@/contexts/AuthContext'
 import { Role } from '@/features/authentication/constants'
 import { useLogoutConfirmation } from '@/features/authentication/hooks/useLogoutConfirmation'
+import AppsIcon from '@mui/icons-material/Apps'
 import CategoryIcon from '@mui/icons-material/Category'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import ChatIcon from '@mui/icons-material/Forum'
@@ -16,6 +17,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import PeopleIcon from '@mui/icons-material/People'
 import SettingsIcon from '@mui/icons-material/Settings'
 import StorefrontIcon from '@mui/icons-material/Storefront'
+import VideoCallIcon from '@mui/icons-material/VideoCall'
 import { ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
@@ -50,6 +52,11 @@ const Sidebar = () => {
             path: '/categories',
           },
           { text: 'Brands', icon: <StorefrontIcon />, path: '/brands' },
+          {
+            text: 'Product Properties',
+            icon: <AppsIcon />,
+            path: '/product-properties',
+          },
         ],
       })
     }
@@ -58,7 +65,14 @@ const Sidebar = () => {
       items.push(
         {
           name: 'General',
-          items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
+          items: [
+            { text: 'Chat Box', icon: <ChatIcon />, path: '/chat' },
+            {
+              text: 'Video Call',
+              icon: <VideoCallIcon />,
+              path: '/video-call',
+            },
+          ],
         },
         {
           name: 'Management',

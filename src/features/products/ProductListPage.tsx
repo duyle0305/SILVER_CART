@@ -1,5 +1,8 @@
 import { BaseTable } from '@/components/common/BaseTable'
 import { type HeadCell } from '@/components/common/BaseTableHead'
+import { SortType } from '@/constants'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { authorizationAction } from '@/features/authentication/constants'
 import ProductTableToolbar, {
   type ProductFilters,
 } from '@/features/products/components/ProductTableToolbar'
@@ -10,20 +13,17 @@ import { useNotification } from '@/hooks/useNotification'
 import { useTable } from '@/hooks/useTable'
 import BorderColorIcon from '@mui/icons-material/BorderColor'
 import {
+  Avatar,
   Box,
   IconButton,
-  TableCell,
-  Avatar,
-  Typography,
   Stack,
+  TableCell,
   Tooltip,
+  Typography,
 } from '@mui/material'
 import { useDebounce } from 'ahooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthContext } from '@/contexts/AuthContext'
-import { Role } from '@/features/authentication/constants'
-import { SortType } from '@/constants'
 
 const productHeadCells: readonly HeadCell<ProductListItem>[] = [
   { id: 'name', label: 'Product' },
@@ -43,6 +43,10 @@ function ProductListPage() {
     maxPrice: '',
   })
   const debouncedKeyword = useDebounce(filters.keyword, { wait: 500 })
+  const allowModifyProducts =
+    (user?.role &&
+      authorizationAction.allowCreateProducts.includes(user.role)) ||
+    (user?.role && authorizationAction.allowUpdateProducts.includes(user.role))
 
   const { data, isLoading, error } = useProducts({
     page: table.page + 1,
@@ -108,18 +112,20 @@ function ProductListPage() {
           </Typography>
         </Tooltip>
       </TableCell>
-      <TableCell>
-        <IconButton
-          size="small"
-          color="primary"
-          onClick={(e) => {
-            e.stopPropagation()
-            navigate(`/products/edit/${product.id}`)
-          }}
-        >
-          <BorderColorIcon fontSize="small" />
-        </IconButton>
-      </TableCell>
+      {allowModifyProducts && (
+        <TableCell>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(`/products/edit/${product.id}`)
+            }}
+          >
+            <BorderColorIcon fontSize="small" />
+          </IconButton>
+        </TableCell>
+      )}
     </StyledTableRow>
   )
 
@@ -139,9 +145,7 @@ function ProductListPage() {
         }
         renderRow={renderProductRow}
         showCheckbox={false}
-        allowModify={
-          user?.role === Role.ADMIN || user?.role === Role.SUPER_ADMIN
-        }
+        allowModify={allowModifyProducts}
       />
     </Box>
   )

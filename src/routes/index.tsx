@@ -1,7 +1,7 @@
 import AppLayout from '@/components/layout/AppLayout'
 import { AuthGuard } from '@/features/authentication/components/AuthGuard'
 import { GuestGuard } from '@/features/authentication/components/GuestGuard'
-import { Role } from '@/features/authentication/constants'
+import { authorizationAction, Role } from '@/features/authentication/constants'
 import LoginPage from '@/pages/LoginPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import { lazy } from 'react'
@@ -30,6 +30,13 @@ const CreateSubCategoryPage = lazy(
 )
 const ListBrandPage = lazy(() => import('@/features/brands/ListBrandPage'))
 const CreateBrandPage = lazy(() => import('@/features/brands/CreateBrandPage'))
+const ListProductPropertyPage = lazy(
+  () => import('@/features/product-property/ListProductPropertyPage')
+)
+const CreateProductPropertyPage = lazy(
+  () => import('@/features/product-property/CreateProductPropertyPage')
+)
+const VideoCallPage = lazy(() => import('@/features/video-call/VideoCallPage'))
 
 export const router = createBrowserRouter([
   {
@@ -49,7 +56,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN, Role.CONSULTANT]}>
             <Dashboard />
           </AuthGuard>
         ),
@@ -60,29 +67,37 @@ export const router = createBrowserRouter([
       // Users
       {
         path: 'users',
-        element: (
-          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
-            <Outlet />
-          </AuthGuard>
-        ),
+        element: <Outlet />,
         handle: {
           title: 'User Management',
         },
         children: [
           {
             index: true,
-            element: <Users />,
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewUser}>
+                <Users />
+              </AuthGuard>
+            ),
           },
           {
             path: 'add',
-            element: <CreateUserPage />,
+            element: (
+              <AuthGuard roles={authorizationAction.allowCreateUser}>
+                <CreateUserPage />
+              </AuthGuard>
+            ),
             handle: {
               title: 'Create User',
             },
           },
           {
             path: ':id',
-            element: <UserDetailPage />,
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewUser}>
+                <UserDetailPage />
+              </AuthGuard>
+            ),
             handle: {
               title: 'User Information',
             },
@@ -99,9 +114,7 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <AuthGuard
-                roles={[Role.ADMIN, Role.SUPER_ADMIN, Role.CONSULTANT]}
-              >
+              <AuthGuard roles={authorizationAction.allowViewProducts}>
                 <Products />
               </AuthGuard>
             ),
@@ -109,7 +122,7 @@ export const router = createBrowserRouter([
           {
             path: 'add',
             element: (
-              <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+              <AuthGuard roles={authorizationAction.allowCreateProducts}>
                 <CreateUpdateProductPage />
               </AuthGuard>
             ),
@@ -120,7 +133,7 @@ export const router = createBrowserRouter([
           {
             path: 'edit/:id',
             element: (
-              <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+              <AuthGuard roles={authorizationAction.allowUpdateProducts}>
                 <CreateUpdateProductPage />
               </AuthGuard>
             ),
@@ -211,6 +224,43 @@ export const router = createBrowserRouter([
             },
           },
         ],
+      },
+      // Product Properties
+      {
+        path: 'product-properties',
+        element: (
+          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+            <Outlet />
+          </AuthGuard>
+        ),
+        handle: {
+          title: 'Product Property Management',
+        },
+        children: [
+          {
+            index: true,
+            element: <ListProductPropertyPage />,
+          },
+          {
+            path: 'add',
+            element: <CreateProductPropertyPage />,
+            handle: {
+              title: 'Create Product Property',
+            },
+          },
+        ],
+      },
+      // Video Call
+      {
+        path: 'video-call',
+        element: (
+          <AuthGuard roles={[Role.CONSULTANT]}>
+            <VideoCallPage />
+          </AuthGuard>
+        ),
+        handle: {
+          title: 'Video Call',
+        },
       },
     ],
   },

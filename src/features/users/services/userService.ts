@@ -2,6 +2,7 @@ import type {
   CreateUserPayload,
   User,
   UserBodyParam,
+  UserDetail,
 } from '@/features/users/types'
 import { apiClient } from '@/lib/axios'
 import type { BaseResponse } from '@/types/baseResponse.type'
@@ -23,8 +24,11 @@ export const fetchUsers = async (
 export const fetchUserDetail = async (
   id: string,
   signal: AbortSignal
-): Promise<User> => {
-  const response = await apiClient.get<User>(`User/${id}`, { signal })
+): Promise<UserDetail> => {
+  const response = await apiClient.get<UserDetail>('User/GetDetail', {
+    params: { id },
+    signal,
+  })
   return response
 }
 

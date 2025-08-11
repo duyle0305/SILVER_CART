@@ -17,5 +17,16 @@ export default defineConfig(({ mode }) => {
     server: {
       port: parseInt(env.SC_APP_PORT, 10) || 5173,
     },
+    preview: {
+      port: parseInt(env.SC_APP_PORT, 10) || 4173,
+      strictPort: true,
+    },
+    build: {
+      outDir: 'dist',
+      sourcemap: false,
+      esbuild: {
+        drop: ['console', 'debugger'],
+      },
+    },
   }
 })

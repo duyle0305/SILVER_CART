@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getAllValueProductProperty } from '../services/productService'
+import { getAllValueProductProperty } from '../services/productPropertyService'
 
 export const useAllValueProductProperty = () => {
   return useQuery({

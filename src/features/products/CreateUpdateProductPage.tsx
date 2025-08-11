@@ -8,9 +8,12 @@ import {
   SectionPaper,
   SectionTitle,
   StyledAvatar,
-  StyledVideoName,
   VariantPaper,
 } from '@/features/products/components/styles/CreateUpdateProductPage.styles'
+import { useLoader } from '@/hooks/useLoader'
+import { useNotification } from '@/hooks/useNotification'
+import { uploadFile } from '@/services/fileUploadService'
+import { zodResolver } from '@hookform/resolvers/zod'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
 import VideoCallIcon from '@mui/icons-material/VideoCall'
@@ -18,6 +21,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   FormControl,
   FormControlLabel,
   FormHelperText,
@@ -28,12 +32,13 @@ import {
   OutlinedInput,
   Select,
   Stack,
-  TextField,
-  Tooltip,
-  Typography,
   Switch,
-  Chip,
+  TextField,
+  Typography,
 } from '@mui/material'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { isAxiosError } from 'axios'
+import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import {
   Controller,
@@ -42,28 +47,21 @@ import {
   type SubmitHandler,
 } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useNotification } from '@/hooks/useNotification'
-import { useLoader } from '@/hooks/useLoader'
-import { isAxiosError } from 'axios'
+import { useBrands } from '../brands/hooks/useBrands'
+import { useLeafCategories } from '../categories/hooks/useLeafCategories'
 import FileUploader from './components/FileUploader'
 import PreviewDialog from './components/PreviewDialog'
 import VideoThumbnail from './components/VideoThumbnail'
-import { useLeafCategories } from '../categories/hooks/useLeafCategories'
-import { useAllValueProductProperty } from './hooks/useAllValueProductProperty'
+import { useAllValueProductProperty } from '../product-property/hooks/useAllValueProductProperty'
+import { useCreateProduct } from './hooks/useCreateProduct'
+import { useProductDetail } from './hooks/useProductDetail'
+import { useUpdateProduct } from './hooks/useUpdateProduct'
 import {
   createProductInputSchema,
   createProductOutputSchema,
   type CreateProductFormInputs,
 } from './schemas'
-import { uploadFile } from '@/services/fileUploadService'
 import type { CreateProductPayload } from './types'
-import { useCreateProduct } from './hooks/useCreateProduct'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
-import dayjs from 'dayjs'
-import { useBrands } from '../brands/hooks/useBrands'
-import { useUpdateProduct } from './hooks/useUpdateProduct'
-import { useProductDetail } from './hooks/useProductDetail'
 
 type ImageFile = File | { url: string }
 
@@ -141,17 +139,20 @@ const CreateUpdateProductPage = () => {
     try {
       const transformedData = createProductOutputSchema.parse(data)
 
-      let videoUrl = ''
+      let videoUrlToSend = videoUrl || ''
       if (transformedData.videoFile) {
-        videoUrl = await uploadFile(transformedData.videoFile, 'videos')
+        videoUrlToSend = await uploadFile(transformedData.videoFile, 'videos')
       }
 
       const processedVariants = await Promise.all(
         transformedData.productVariants.map(async (variant) => {
           const imageUrls = await Promise.all(
-            (variant.productImages || []).map((file) =>
-              uploadFile(file, 'images')
-            )
+            (variant.productImages || []).map(async (img) => {
+              if (img instanceof File) {
+                return await uploadFile(img, 'images')
+              }
+              return (img as { url: string }).url
+            })
           )
           return {
             price: variant.price,
@@ -168,7 +169,7 @@ const CreateUpdateProductPage = () => {
         name: transformedData.name,
         brand: transformedData.brand,
         description: transformedData.description || '',
-        videoPath: videoUrl,
+        videoPath: videoUrlToSend,
         weight: transformedData.weight,
         height: transformedData.height,
         length: transformedData.length,
@@ -210,6 +211,9 @@ const CreateUpdateProductPage = () => {
         discount: variant.discount.toString(),
         stock: variant.stock.toString(),
         isActive: variant.isActive,
+        productImages: (variant.productImages || []).map((img) => ({
+          url: img.url,
+        })),
         valueIds: variant.productVariantValues.map((v) => v.valueId),
       }))
       const formValues: Partial<CreateProductFormInputs> = {
@@ -336,10 +340,10 @@ const CreateUpdateProductPage = () => {
                         }
                       }}
                     >
-                      {leafCategories.map((cat) => {
+                      {leafCategories.map((cat, index) => {
                         return (
                           <MenuItem
-                            key={cat.valueId}
+                            key={`${cat.valueId}${index}`}
                             value={JSON.stringify(cat.path)}
                           >
                             <ListItemText primary={cat.label} />
@@ -444,18 +448,8 @@ const CreateUpdateProductPage = () => {
                             field.value && handlePreview(field.value)
                           }
                         >
-                          <VideoThumbnail file={field.value} />
+                          <VideoThumbnail source={field.value} />
                         </StyledAvatar>
-                        <Tooltip
-                          title={field.value.name}
-                          placement="top"
-                          arrow
-                          followCursor
-                        >
-                          <StyledVideoName variant="caption" noWrap>
-                            {field.value.name}
-                          </StyledVideoName>
-                        </Tooltip>
                         <RemoveImageButton
                           size="small"
                           onClick={() => {
@@ -472,11 +466,9 @@ const CreateUpdateProductPage = () => {
                           variant="rounded"
                           onClick={() => window.open(videoUrl, '_blank')}
                         >
-                          <video
-                            src={videoUrl}
-                            width="150"
-                            height="150"
-                            style={{ objectFit: 'cover' }}
+                          <VideoThumbnail
+                            source={videoUrl}
+                            onOpen={(url) => window.open(url, '_blank')}
                           />
                         </StyledAvatar>
                         <RemoveImageButton

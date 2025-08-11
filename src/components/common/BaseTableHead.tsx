@@ -38,7 +38,7 @@ export function BaseTableHead<T>(props: BaseTableHeadProps<T>) {
     allowModify = true,
     isSortable = true,
   } = props
-  const sortDirection = order === 'Ascending' ? 'asc' : 'desc'
+  const sortDirection: 'asc' | 'desc' = order === 0 ? 'asc' : 'desc'
 
   return (
     <TableHead sx={{ backgroundColor: 'action.hover' }}>

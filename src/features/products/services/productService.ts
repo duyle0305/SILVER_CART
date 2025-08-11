@@ -4,7 +4,6 @@ import type {
   ProductSearchBody,
   ProductDetail,
   CreateProductPayload,
-  ProductProperty,
 } from '@/features/products/types'
 import type { BaseResponse } from '@/types/baseResponse.type'
 
@@ -35,16 +34,6 @@ export const fetchProductById = async (
 
 export const createProduct = async (data: CreateProductPayload) => {
   await apiClient.post('Product/Create', data)
-}
-
-export const getAllValueProductProperty = async (
-  signal: AbortSignal
-): Promise<ProductProperty[]> => {
-  const response = await apiClient.get<ProductProperty[]>(
-    'ProductProperty/GetAllValueProductProperty',
-    { signal }
-  )
-  return response
 }
 
 export const updateProduct = async (id: string, data: CreateProductPayload) => {

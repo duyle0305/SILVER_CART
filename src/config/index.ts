@@ -6,4 +6,6 @@ export const config = {
   firebaseStorageBucket: import.meta.env.SC_FIREBASE_STORAGE_BUCKET,
   firebaseMessagingSenderId: import.meta.env.SC_FIREBASE_MESSAGING_SENDER_ID,
   firebaseAppId: import.meta.env.SC_FIREBASE_APP_ID,
+  agoraAppId: import.meta.env.SC_AGORA_APP_ID,
+  agoraToken: import.meta.env.SC_AGORA_TOKEN,
 }

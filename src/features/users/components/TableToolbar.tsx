@@ -19,6 +19,8 @@ import {
 import type { ChangeEvent } from 'react'
 import type { RoleResponse } from '@/features/roles/types'
 import { useNavigate } from 'react-router-dom'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { authorizationAction } from '@/features/authentication/constants'
 
 interface TableToolbarProps {
   filter: string
@@ -38,6 +40,12 @@ const TableToolbar = ({
   isLoadingRoles,
 }: TableToolbarProps) => {
   const navigate = useNavigate()
+  const { user } = useAuthContext()
+  const allowModifyProducts =
+    (user?.role &&
+      authorizationAction.allowCreateProducts.includes(user.role)) ||
+    (user?.role && authorizationAction.allowUpdateProducts.includes(user.role))
+
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     onFilterChange(e.target.value)
   }
@@ -57,13 +65,15 @@ const TableToolbar = ({
         <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
           All users
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/users/add')}
-        >
-          Add user
-        </Button>
+        {allowModifyProducts && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/users/add')}
+          >
+            Add user
+          </Button>
+        )}
       </Stack>
       <StyledToolbar>
         <Stack direction="row" spacing={2} width="25%">
