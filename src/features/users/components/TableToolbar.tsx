@@ -41,10 +41,8 @@ const TableToolbar = ({
 }: TableToolbarProps) => {
   const navigate = useNavigate()
   const { user } = useAuthContext()
-  const allowModifyProducts =
-    (user?.role &&
-      authorizationAction.allowCreateProducts.includes(user.role)) ||
-    (user?.role && authorizationAction.allowUpdateProducts.includes(user.role))
+  const allowModifyUsers =
+    user?.role && authorizationAction.allowCreateUser.includes(user.role)
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     onFilterChange(e.target.value)
@@ -65,7 +63,7 @@ const TableToolbar = ({
         <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
           All users
         </Typography>
-        {allowModifyProducts && (
+        {allowModifyUsers && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}

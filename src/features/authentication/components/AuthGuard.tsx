@@ -1,5 +1,5 @@
 import { useAuthContext } from '@/contexts/AuthContext'
-import type { Role } from '@/features/authentication/constants'
+import { Role } from '@/features/authentication/constants'
 import { type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 
@@ -18,7 +18,7 @@ export function AuthGuard({ children, roles }: AuthGuardProps) {
   const hasRequiredRole = !roles || (user && roles.includes(user.role))
 
   if (!hasRequiredRole) {
-    return <Navigate to="/unauthorized" replace />
+    return <Navigate to={user?.role === Role.ADMIN ? '/' : '/users'} replace />
   }
 
   return <>{children}</>

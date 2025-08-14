@@ -18,6 +18,9 @@ import PeopleIcon from '@mui/icons-material/People'
 import SettingsIcon from '@mui/icons-material/Settings'
 import StorefrontIcon from '@mui/icons-material/Storefront'
 import VideoCallIcon from '@mui/icons-material/VideoCall'
+import RateReviewIcon from '@mui/icons-material/RateReview'
+import AssessmentIcon from '@mui/icons-material/Assessment'
+import LocalOfferIcon from '@mui/icons-material/LocalOffer'
 import { ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
@@ -40,7 +43,7 @@ const Sidebar = () => {
     if (!userRole) return []
     const items = []
 
-    if (userRole === Role.ADMIN || userRole === Role.SUPER_ADMIN) {
+    if (userRole === Role.ADMIN) {
       items.push({
         name: 'Management',
         items: [
@@ -57,12 +60,34 @@ const Sidebar = () => {
             icon: <AppsIcon />,
             path: '/product-properties',
           },
+          {
+            text: 'Reports',
+            icon: <AssessmentIcon />,
+            path: '/reports',
+          },
+          {
+            text: 'Promotions',
+            icon: <LocalOfferIcon />,
+            path: '/promotions',
+          },
         ],
       })
     }
 
     if (userRole === Role.CONSULTANT) {
       items.push(
+        {
+          name: 'Management',
+          items: [
+            { text: 'Users', icon: <PeopleIcon />, path: '/users' },
+            { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+            {
+              text: 'Promotions',
+              icon: <LocalOfferIcon />,
+              path: '/promotions',
+            },
+          ],
+        },
         {
           name: 'General',
           items: [
@@ -73,13 +98,32 @@ const Sidebar = () => {
               path: '/video-call',
             },
           ],
-        },
+        }
+      )
+    }
+
+    if (userRole === Role.STAFF) {
+      items.push(
         {
           name: 'Management',
           items: [
-            { text: 'Products', icon: <InventoryIcon />, path: '/products' },
             { text: 'Users', icon: <PeopleIcon />, path: '/users' },
+            { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+            {
+              text: 'Promotions',
+              icon: <LocalOfferIcon />,
+              path: '/promotions',
+            },
+            {
+              text: 'Feedbacks',
+              icon: <RateReviewIcon />,
+              path: '/feedbacks',
+            },
           ],
+        },
+        {
+          name: 'General',
+          items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
         }
       )
     }
@@ -108,12 +152,14 @@ const Sidebar = () => {
         </Typography>
       </StyledLogoToolbar>
 
-      <StyledNavList disablePadding>
-        <StyledNavItem component={NavLink} to={dashboardItem.path}>
-          <ListItemIcon>{dashboardItem.icon}</ListItemIcon>
-          <ListItemText primary={dashboardItem.text} />
-        </StyledNavItem>
-      </StyledNavList>
+      {user?.role && user?.role === Role.ADMIN && (
+        <StyledNavList disablePadding>
+          <StyledNavItem component={NavLink} to={dashboardItem.path}>
+            <ListItemIcon>{dashboardItem.icon}</ListItemIcon>
+            <ListItemText primary={dashboardItem.text} />
+          </StyledNavItem>
+        </StyledNavList>
+      )}
 
       <StyledNavList>
         {categories.map((category) => (

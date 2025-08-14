@@ -31,3 +31,34 @@ export const confirmLogoutDialog = (
     ),
   }
 }
+
+export const confirmRemovePromotionDialog = (
+  onConfirm: () => void,
+  onCancel: () => void
+) => {
+  return {
+    title: (
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <WarningIcon color="warning" />
+        <Typography variant="h6" component="h2">
+          Remove Promotion
+        </Typography>
+      </Stack>
+    ),
+    content: (
+      <DialogContentText>
+        Are you sure you want to remove this promotion?
+      </DialogContentText>
+    ),
+    actions: (
+      <>
+        <Button onClick={onCancel} variant="text">
+          Cancel
+        </Button>
+        <Button onClick={onConfirm} color="error" variant="contained" autoFocus>
+          Remove
+        </Button>
+      </>
+    ),
+  }
+}

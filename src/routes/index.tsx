@@ -37,6 +37,28 @@ const CreateProductPropertyPage = lazy(
   () => import('@/features/product-property/CreateProductPropertyPage')
 )
 const VideoCallPage = lazy(() => import('@/features/video-call/VideoCallPage'))
+const ListFeedbackPage = lazy(
+  () => import('@/features/feedbacks/ListFeedbackPage')
+)
+const ListReportPage = lazy(() => import('@/features/reports/ListReportPage'))
+const ListPromotionPage = lazy(
+  () => import('@/features/promotions/ListPromotionPage')
+)
+const PromotionDetailPage = lazy(
+  () => import('@/features/promotions/PromotionDetailPage')
+)
+const CreateUpdatePromotionPage = lazy(
+  () => import('@/features/promotions/CreateUpdatePromotionPage')
+)
+const CreateUpdateReportPage = lazy(
+  () => import('@/features/reports/CreateUpdateReportPage')
+)
+const FeedbackDetailPage = lazy(
+  () => import('@/features/feedbacks/FeedbackDetailPage')
+)
+const RespondFeedbackPage = lazy(
+  () => import('@/features/feedbacks/RespondFeedbackPage')
+)
 
 export const router = createBrowserRouter([
   {
@@ -56,7 +78,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN, Role.CONSULTANT]}>
+          <AuthGuard roles={[Role.ADMIN]}>
             <Dashboard />
           </AuthGuard>
         ),
@@ -144,9 +166,7 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <AuthGuard
-                roles={[Role.ADMIN, Role.SUPER_ADMIN, Role.CONSULTANT]}
-              >
+              <AuthGuard roles={authorizationAction.allowViewProducts}>
                 <ProductDetailPage />
               </AuthGuard>
             ),
@@ -160,7 +180,7 @@ export const router = createBrowserRouter([
       {
         path: 'categories',
         element: (
-          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+          <AuthGuard roles={authorizationAction.allowCRUDCategories}>
             <Outlet />
           </AuthGuard>
         ),
@@ -192,7 +212,7 @@ export const router = createBrowserRouter([
       {
         path: 'chat',
         element: (
-          <AuthGuard roles={[Role.CONSULTANT]}>
+          <AuthGuard roles={authorizationAction.allowChat}>
             <ChatPage />
           </AuthGuard>
         ),
@@ -204,7 +224,7 @@ export const router = createBrowserRouter([
       {
         path: 'brands',
         element: (
-          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+          <AuthGuard roles={authorizationAction.allowCRUDBrands}>
             <Outlet />
           </AuthGuard>
         ),
@@ -229,7 +249,7 @@ export const router = createBrowserRouter([
       {
         path: 'product-properties',
         element: (
-          <AuthGuard roles={[Role.ADMIN, Role.SUPER_ADMIN]}>
+          <AuthGuard roles={authorizationAction.allowCRUDProductProperties}>
             <Outlet />
           </AuthGuard>
         ),
@@ -254,13 +274,133 @@ export const router = createBrowserRouter([
       {
         path: 'video-call',
         element: (
-          <AuthGuard roles={[Role.CONSULTANT]}>
+          <AuthGuard roles={authorizationAction.allowVideoCall}>
             <VideoCallPage />
           </AuthGuard>
         ),
         handle: {
           title: 'Video Call',
         },
+      },
+      // Feedbacks
+      {
+        path: 'feedbacks',
+        element: <Outlet />,
+        handle: {
+          title: 'Feedback Management',
+        },
+        children: [
+          {
+            index: true,
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewFeedbacks}>
+                <ListFeedbackPage />
+              </AuthGuard>
+            ),
+          },
+          {
+            path: 'respond/:id',
+            element: (
+              <AuthGuard roles={authorizationAction.allowRespondFeedback}>
+                <RespondFeedbackPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Respond feedback',
+            },
+          },
+          {
+            path: ':id',
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewFeedbacks}>
+                <FeedbackDetailPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Feedback information',
+            },
+          },
+        ],
+      },
+      // Reports
+      {
+        path: 'reports',
+        element: <Outlet />,
+        handle: {
+          title: 'Report Management',
+        },
+        children: [
+          {
+            index: true,
+            element: (
+              <AuthGuard roles={[Role.ADMIN]}>
+                <ListReportPage />
+              </AuthGuard>
+            ),
+          },
+          {
+            path: 'add',
+            element: (
+              <AuthGuard roles={[Role.CONSULTANT]}>
+                <CreateUpdateReportPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Create Report',
+            },
+          },
+        ],
+      },
+      // Promotions
+      {
+        path: 'promotions',
+        element: <Outlet />,
+        handle: {
+          title: 'Promotion Management',
+        },
+        children: [
+          {
+            index: true,
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewPromotion}>
+                <ListPromotionPage />
+              </AuthGuard>
+            ),
+          },
+          {
+            path: 'add',
+            element: (
+              <AuthGuard roles={authorizationAction.allowWritePromotion}>
+                <CreateUpdatePromotionPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Create Promotion',
+            },
+          },
+          {
+            path: 'edit/:id',
+            element: (
+              <AuthGuard roles={authorizationAction.allowWritePromotion}>
+                <CreateUpdatePromotionPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Edit Promotion',
+            },
+          },
+          {
+            path: ':id',
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewPromotion}>
+                <PromotionDetailPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Promotion information',
+            },
+          },
+        ],
       },
     ],
   },
