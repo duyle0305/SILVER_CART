@@ -5,12 +5,21 @@ import PaymentIcon from '@mui/icons-material/Payment'
 import PersonIcon from '@mui/icons-material/Person'
 import PhoneIcon from '@mui/icons-material/Phone'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import EmergencyIcon from '@mui/icons-material/Emergency'
+import BlockIcon from '@mui/icons-material/Block'
+import LockOpenIcon from '@mui/icons-material/LockOpen'
 import {
   Avatar,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Grid,
   Paper,
   Stack,
@@ -20,13 +29,20 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material'
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useUserDetail } from './hooks/useUserDetail'
 import { useLoader } from '@/hooks/useLoader'
 import { useNotification } from '@/hooks/useNotification'
+import dayjs from 'dayjs'
+import { useBanOrUnbanUser } from './hooks/useBanOrUnbanUser'
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
+import HomeIcon from '@mui/icons-material/Home'
+import ContactPhoneIcon from '@mui/icons-material/ContactPhone'
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom'
 
 const genderLabel = (gender?: number) =>
   gender === 1
@@ -36,12 +52,6 @@ const genderLabel = (gender?: number) =>
       : gender === 3
         ? 'Other'
         : 'Unknown'
-
-const fmtDate = (dateString?: string) => {
-  if (!dateString) return '—'
-  const date = new Date(dateString)
-  return isNaN(date.getTime()) ? dateString : date.toLocaleDateString()
-}
 
 const Metric: React.FC<{
   icon: React.ReactNode
@@ -66,16 +76,48 @@ const UserDetailPage = () => {
   const navigate = useNavigate()
   const { showLoader, hideLoader } = useLoader()
   const { showNotification } = useNotification()
+  const { mutateAsync: banOrUnbanUser } = useBanOrUnbanUser()
+
   if (!id) {
     navigate('/users')
   }
 
-  const { data, isLoading, error } = useUserDetail(id || '')
-  if (isLoading) {
-    showLoader()
-  } else {
-    hideLoader()
-  }
+  const { data, isLoading, error, refetch } = useUserDetail(id || '')
+  const {
+    data: guardian,
+    isLoading: isGuardianLoading,
+    error: guardianError,
+    refetch: refetchGuardian,
+  } = useUserDetail(data?.guardianId ?? '', !data?.guardianId)
+
+  const isBanned = !!data?.isDeleted
+  const banButtonCfg = useMemo(
+    () =>
+      isBanned
+        ? {
+            color: 'success' as const,
+            text: 'Unban user',
+            icon: <LockOpenIcon />,
+          }
+        : { color: 'error' as const, text: 'Ban user', icon: <BlockIcon /> },
+    [isBanned]
+  )
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const openConfirm = () => setConfirmOpen(true)
+  const closeConfirm = () => setConfirmOpen(false)
+  const isElder = useMemo(() => data?.roleName === 'Elder', [data?.roleName])
+  const hasGuardian =
+    !!guardian?.fullName ||
+    !!guardian?.phoneNumber ||
+    !!guardian?.relationShip ||
+    !!guardian?.addresses
+
+  useEffect(() => {
+    if (isLoading) showLoader()
+    else hideLoader()
+  }, [isLoading])
 
   useEffect(() => {
     if (error) {
@@ -83,12 +125,43 @@ const UserDetailPage = () => {
     }
   }, [error])
 
+  useEffect(() => {
+    if (data) {
+      refetchGuardian()
+    }
+  }, [data, refetchGuardian])
+
+  const handleConfirm = async () => {
+    if (!id) return
+    try {
+      showLoader()
+      await banOrUnbanUser(id)
+      showNotification(
+        isBanned
+          ? 'User has been unbanned successfully.'
+          : 'User has been banned successfully.',
+        'success'
+      )
+      await refetch?.()
+    } catch (e: any) {
+      showNotification(e?.message || 'Action failed', 'error')
+    } finally {
+      hideLoader()
+      closeConfirm()
+    }
+  }
+
   return (
     <Stack spacing={3}>
       <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
         <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid>
+          <Grid
+            container
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Grid sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
               <Avatar
                 src={data?.avatar ?? undefined}
                 alt={data?.fullName}
@@ -96,12 +169,20 @@ const UserDetailPage = () => {
               >
                 <PersonIcon />
               </Avatar>
-            </Grid>
-            <Grid>
               <Stack spacing={0.5}>
-                <Typography variant="h6">
-                  {data?.fullName || 'Unnamed User'}
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="h6">
+                    {data?.fullName || 'Unnamed User'}
+                  </Typography>
+                  {isBanned && (
+                    <Chip
+                      label="Banned"
+                      variant="filled"
+                      color="error"
+                      size="small"
+                    />
+                  )}
+                </Stack>
                 <Typography variant="body2" color="text.secondary">
                   @{data?.userName}
                 </Typography>
@@ -114,22 +195,36 @@ const UserDetailPage = () => {
                 >
                   <Stack direction="row" spacing={0.5} alignItems="center">
                     <EmailIcon fontSize="small" />
-                    <Typography variant="body2">
-                      {data?.email || '—'}
-                    </Typography>
+                    <Tooltip title="email">
+                      <Typography variant="body2">
+                        {data?.email || '—'}
+                      </Typography>
+                    </Tooltip>
                   </Stack>
                   <Stack direction="row" spacing={0.5} alignItems="center">
                     <PhoneIcon fontSize="small" />
-                    <Typography variant="body2">
-                      {data?.phoneNumber || '—'}
-                    </Typography>
+                    <Tooltip title="phone number">
+                      <Typography variant="body2">
+                        {data?.phoneNumber || '—'}
+                      </Typography>
+                    </Tooltip>
+                  </Stack>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <EmergencyIcon fontSize="small" color="error" />
+                    <Tooltip title="emergency phone number">
+                      <Typography variant="body2">
+                        {data?.emergencyPhoneNumber || '—'}
+                      </Typography>
+                    </Tooltip>
                   </Stack>
                   <Stack direction="row" spacing={0.5} alignItems="center">
                     <CakeIcon fontSize="small" />
-                    <Typography variant="body2">
-                      {fmtDate(data?.birthDate)}{' '}
-                      {data?.age ? `• ${data?.age} yrs` : ''}
-                    </Typography>
+                    <Tooltip title="birthdate">
+                      <Typography variant="body2">
+                        {dayjs(data?.birthDate).format('DD/MM/YYYY')}{' '}
+                        {data?.age ? `• ${data?.age} yrs` : ''}
+                      </Typography>
+                    </Tooltip>
                   </Stack>
                   <Chip size="small" label={data?.roleName || 'No role'} />
                   <Chip
@@ -139,6 +234,17 @@ const UserDetailPage = () => {
                   />
                 </Stack>
               </Stack>
+            </Grid>
+
+            <Grid>
+              <Button
+                variant={isBanned ? 'outlined' : 'contained'}
+                color={banButtonCfg.color}
+                startIcon={banButtonCfg.icon}
+                onClick={openConfirm}
+              >
+                {banButtonCfg.text}
+              </Button>
             </Grid>
           </Grid>
         </CardContent>
@@ -183,6 +289,72 @@ const UserDetailPage = () => {
           </CardContent>
         </Card>
       ) : null}
+
+      {isElder && (
+        <Card
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider' }}
+        >
+          <CardContent>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ mb: 1.5 }}
+            >
+              <SupervisorAccountIcon fontSize="small" />
+              <Typography variant="subtitle1">Guardian</Typography>
+              {guardian?.relationShip && (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  color="info"
+                  icon={<FamilyRestroomIcon />}
+                  label={guardian.relationShip}
+                  sx={{ ml: 1 }}
+                />
+              )}
+            </Stack>
+
+            {hasGuardian ? (
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <PersonIcon fontSize="small" />
+                    <Typography variant="body2">
+                      {guardian.fullName || '—'}
+                    </Typography>
+                  </Stack>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <EmailIcon fontSize="small" />
+                    <Tooltip title="guardian email">
+                      <Typography variant="body2">
+                        {guardian.email || '—'}
+                      </Typography>
+                    </Tooltip>
+                  </Stack>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <ContactPhoneIcon fontSize="small" />
+                    <Tooltip title="guardian phone">
+                      <Typography variant="body2">
+                        {guardian.phoneNumber || '—'}
+                      </Typography>
+                    </Tooltip>
+                  </Stack>
+                </Grid>
+              </Grid>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No guardian information
+              </Typography>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -311,6 +483,30 @@ const UserDetailPage = () => {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={confirmOpen} onClose={closeConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          {isBanned ? 'Confirm unban user' : 'Confirm ban user'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {isBanned
+              ? 'Are you sure you want to unban this user? They will regain access to the system.'
+              : 'Are you sure you want to ban this user? They will lose access to the system.'}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeConfirm}>Cancel</Button>
+          <Button
+            onClick={handleConfirm}
+            variant="contained"
+            color={isBanned ? 'success' : 'error'}
+            startIcon={isBanned ? <LockOpenIcon /> : <BlockIcon />}
+          >
+            {isBanned ? 'Unban' : 'Ban'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }

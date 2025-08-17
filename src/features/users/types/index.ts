@@ -5,6 +5,7 @@ export interface User {
   phoneNumber: string
   roleName: string
   isVerified: boolean
+  isDeleted: boolean
 }
 
 export interface Address {
@@ -27,6 +28,7 @@ export interface UserDetail {
   avatar: string | null
   gender: number
   phoneNumber: string | null
+  emergencyPhoneNumber: string | null
   birthDate: string
   age: number
   rewardPoint: number
@@ -40,6 +42,7 @@ export interface UserDetail {
   categoryLabels: string[]
   cartCount: number
   paymentCount: number
+  isDeleted: boolean
 }
 
 export interface UserBodyParam {

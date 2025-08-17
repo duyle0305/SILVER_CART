@@ -15,6 +15,8 @@ import {
   StyledToolbar,
   StyledToolbarContainer,
 } from './styles/PromotionTableToolbar.style'
+import { authorizationAction } from '@/features/authentication/constants'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 export interface PromotionFilters {
   keyword: string
@@ -31,6 +33,9 @@ export default function PromotionTableToolbar({
   onFiltersChange,
 }: PromotionTableToolbarProps) {
   const navigate = useNavigate()
+  const { user } = useAuthContext()
+  const allowWritePromotion =
+    user?.role && authorizationAction.allowWritePromotion.includes(user.role)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     const mappedValue =
@@ -53,13 +58,15 @@ export default function PromotionTableToolbar({
         <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
           All promotions
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={createPromotion}
-        >
-          Add Promotion
-        </Button>
+        {allowWritePromotion && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={createPromotion}
+          >
+            Add Promotion
+          </Button>
+        )}
       </Stack>
       <StyledToolbar>
         <Grid container spacing={2} alignItems="center">
@@ -68,7 +75,7 @@ export default function PromotionTableToolbar({
               fullWidth
               size="small"
               name="keyword"
-              placeholder="Search product..."
+              placeholder="Search promotion..."
               value={filters.keyword}
               onChange={handleInputChange}
               InputProps={{

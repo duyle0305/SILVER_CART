@@ -4,6 +4,7 @@ import type {
   CategoryRootCreateBodyParam,
   LeafNodesWithPaths,
   LinkCategoryWithSubCategoryBodyParam,
+  RootCategory,
   SubCategoryCreateBodyParam,
 } from '@/features/categories/types'
 import { apiClient } from '@/lib/axios'
@@ -58,4 +59,15 @@ export const linkCategoryWithSubCategory = async (
   data: LinkCategoryWithSubCategoryBodyParam
 ): Promise<void> => {
   await apiClient.put('Category/LinkCategoryWithSubCategory', data)
+}
+
+export const getRootListValueCategory = async (
+  signal: AbortSignal
+): Promise<RootCategory[]> => {
+  return await apiClient.get<RootCategory[]>(
+    'Category/GetRootListValueCategory',
+    {
+      signal,
+    }
+  )
 }

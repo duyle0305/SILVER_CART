@@ -11,6 +11,7 @@ import { Chip, TableCell } from '@mui/material'
 import { useDebounce } from 'ahooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import NotInterestedIcon from '@mui/icons-material/NotInterested'
 
 const userHeadCells: readonly HeadCell<User>[] = [
   { id: 'fullName', label: 'Full Name' },
@@ -18,6 +19,7 @@ const userHeadCells: readonly HeadCell<User>[] = [
   { id: 'phoneNumber', label: 'Phone Number' },
   { id: 'email', label: 'Email' },
   { id: 'isVerified', label: 'Status' },
+  { id: 'isDeleted', label: 'Banned' },
 ]
 
 const UserTable = () => {
@@ -93,6 +95,18 @@ const UserTable = () => {
             <Chip label="Verified" variant="outlined" color="success" />
           ) : (
             <Chip label="Unverified" variant="outlined" color="error" />
+          )}
+        </TableCell>
+        <TableCell>
+          {userRow.isDeleted ? (
+            <Chip
+              label="Banned"
+              variant="outlined"
+              color="error"
+              icon={<NotInterestedIcon />}
+            />
+          ) : (
+            <Chip label="Active" variant="outlined" color="success" />
           )}
         </TableCell>
       </StyledTableRow>

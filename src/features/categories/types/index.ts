@@ -1,4 +1,6 @@
-export interface SubCategory {
+export interface SubCategory extends RootCategory {}
+
+export interface RootCategory {
   id: string
   code: string
   label: string

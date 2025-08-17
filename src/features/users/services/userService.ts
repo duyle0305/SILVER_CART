@@ -36,3 +36,7 @@ export const createUser = async (data: CreateUserPayload): Promise<unknown> => {
   const response = await apiClient.post('User/CreateUser', data)
   return response
 }
+
+export const banUnbanUser = async (userId: string) => {
+  await apiClient.put(`User/${userId}/BanOrUnbanUser`)
+}

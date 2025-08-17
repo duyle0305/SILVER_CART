@@ -19,8 +19,11 @@ const CreateUpdateProductPage = lazy(
   () => import('@/features/products/CreateUpdateProductPage')
 )
 const ChatPage = lazy(() => import('@/features/chat/ChatPage'))
-const ListCategoryPage = lazy(
-  () => import('@/features/categories/ListCategoryPage')
+// const ListCategoryPage = lazy(
+//   () => import('@/features/categories/ListCategoryPage')
+// )
+const ListRootCategoryPage = lazy(
+  () => import('@/features/categories/ListRootCategory')
 )
 const CreateRootCategoryPage = lazy(
   () => import('@/features/categories/CreateRootCategoryPage')
@@ -40,7 +43,16 @@ const VideoCallPage = lazy(() => import('@/features/video-call/VideoCallPage'))
 const ListFeedbackPage = lazy(
   () => import('@/features/feedbacks/ListFeedbackPage')
 )
+const FeedbackDetailPage = lazy(
+  () => import('@/features/feedbacks/FeedbackDetailPage')
+)
+const RespondFeedbackPage = lazy(
+  () => import('@/features/feedbacks/RespondFeedbackPage')
+)
 const ListReportPage = lazy(() => import('@/features/reports/ListReportPage'))
+const CreateUpdateReportPage = lazy(
+  () => import('@/features/reports/CreateUpdateReportPage')
+)
 const ListPromotionPage = lazy(
   () => import('@/features/promotions/ListPromotionPage')
 )
@@ -49,15 +61,6 @@ const PromotionDetailPage = lazy(
 )
 const CreateUpdatePromotionPage = lazy(
   () => import('@/features/promotions/CreateUpdatePromotionPage')
-)
-const CreateUpdateReportPage = lazy(
-  () => import('@/features/reports/CreateUpdateReportPage')
-)
-const FeedbackDetailPage = lazy(
-  () => import('@/features/feedbacks/FeedbackDetailPage')
-)
-const RespondFeedbackPage = lazy(
-  () => import('@/features/feedbacks/RespondFeedbackPage')
 )
 
 export const router = createBrowserRouter([
@@ -190,7 +193,7 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <ListCategoryPage />,
+            element: <ListRootCategoryPage />,
           },
           {
             path: 'add-root',

@@ -257,12 +257,18 @@ const CreateUpdateProductPage = () => {
           </SectionTitle>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                {...register('name')}
-                label="Product Name"
-                fullWidth
-                error={!!errors.name}
-                helperText={errors.name?.message}
+              <Controller
+                name="name"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    label="Product Name"
+                    fullWidth
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -288,12 +294,18 @@ const CreateUpdateProductPage = () => {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <TextField
-                {...register('description')}
-                label="Description"
-                multiline
-                rows={4}
-                fullWidth
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Description"
+                    multiline
+                    rows={4}
+                    fullWidth
+                  />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -367,43 +379,67 @@ const CreateUpdateProductPage = () => {
           <SectionTitle>Details & Media</SectionTitle>
           <Grid container spacing={3}>
             <Grid size={{ xs: 6, md: 3 }}>
-              <TextField
-                {...register('weight')}
-                label="Weight (g)"
-                type="number"
-                fullWidth
-                error={!!errors.weight}
-                helperText={errors.weight?.message}
+              <Controller
+                name="weight"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    label="Weight (g)"
+                    type="number"
+                    fullWidth
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
-              <TextField
-                {...register('height')}
-                label="Height (cm)"
-                type="number"
-                fullWidth
-                error={!!errors.height}
-                helperText={errors.height?.message}
+              <Controller
+                name="height"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    label="Height (cm)"
+                    type="number"
+                    fullWidth
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
-              <TextField
-                {...register('length')}
-                label="Length (cm)"
-                type="number"
-                fullWidth
-                error={!!errors.length}
-                helperText={errors.length?.message}
+              <Controller
+                name="length"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    label="Length (cm)"
+                    type="number"
+                    fullWidth
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
-              <TextField
-                {...register('width')}
-                label="Width (cm)"
-                type="number"
-                fullWidth
-                error={!!errors.width}
-                helperText={errors.width?.message}
+              <Controller
+                name="width"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    label="Width (cm)"
+                    type="number"
+                    fullWidth
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
