@@ -1,43 +1,42 @@
+import { useNotification } from '@/hooks/useNotification'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  Paper,
-  Typography,
   Button,
+  Grid,
+  Paper,
   Stack,
   TextField,
-  Grid,
+  Typography,
 } from '@mui/material'
-import React, { useEffect } from 'react'
-import { useForm, Controller, FormProvider } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect } from 'react'
+import { Controller, FormProvider, useForm } from 'react-hook-form'
+import { useNavigate, useParams } from 'react-router-dom'
+import { RHFTiny } from './components/RHFTiny'
 import {
   createReportSchema,
   type CreateReportFormInput,
   type CreateReportFormOutput,
 } from './schemas'
-import { RHFTiny } from './components/RHFTiny'
-import { useNotification } from '@/hooks/useNotification'
-import { useNavigate, useParams } from 'react-router-dom'
 
-// Tùy bạn hiện có hooks nào — mình để sẵn signatures tương tự Promotion
-import { useCreateReport } from './hooks/useCreateReport'
-import { useUpdateReport } from './hooks/useUpdateReport'
 import { useAuthContext } from '@/contexts/AuthContext'
-// import { useReportDetail } from './hooks/useReportDetail'
-// import { useLoader } from '@/hooks/useLoader'
+import { useLoader } from '@/hooks/useLoader'
+import { useCreateReport } from './hooks/useCreateReport'
+import { useReportDetail } from './hooks/useReportDetail'
+import { useUpdateReport } from './hooks/useUpdateReport'
 
 export default function CreateUpdateReportPage() {
   const navigate = useNavigate()
   const { showNotification } = useNotification()
   const { user } = useAuthContext()
-  // const { showLoader, hideLoader } = useLoader()
+  const { showLoader, hideLoader } = useLoader()
   const { id } = useParams()
   const isEditMode = !!id
 
   const { mutate: createReport, isPending: isCreating } = useCreateReport()
   const { mutate: updateReport, isPending: isUpdating } = useUpdateReport()
-  // const { data: reportDetail, isLoading: isLoadingDetail } = useReportDetail(
-  //   id ?? ''
-  // )
+  const { data: reportDetail, isLoading: isLoadingDetail } = useReportDetail(
+    id ?? ''
+  )
 
   const methods = useForm<CreateReportFormInput>({
     resolver: zodResolver(createReportSchema),
@@ -82,23 +81,21 @@ export default function CreateUpdateReportPage() {
     }
   }
 
-  // useEffect(() => {
-  //   if (isEditMode) {
-  //     if (isLoadingDetail) showLoader()
-  //     else hideLoader()
-  //   }
-  // }, [isEditMode, isLoadingDetail, showLoader, hideLoader])
+  useEffect(() => {
+    if (isEditMode) {
+      if (isLoadingDetail) showLoader()
+      else hideLoader()
+    }
+  }, [isEditMode, isLoadingDetail, showLoader, hideLoader])
 
-  // useEffect(() => {
-  //   if (isEditMode && reportDetail) {
-  //     reset({
-  //       title: reportDetail.title ?? '',
-  //       description: reportDetail.description ?? '',
-  //       userId: reportDetail.userId ?? '',
-  //       consultantId: reportDetail.consultantId ?? '',
-  //     })
-  //   }
-  // }, [isEditMode, reportDetail, reset])
+  useEffect(() => {
+    if (isEditMode && reportDetail) {
+      reset({
+        title: reportDetail.title ?? '',
+        description: reportDetail.description ?? '',
+      })
+    }
+  }, [isEditMode, reportDetail, reset])
 
   return (
     <FormProvider {...methods}>

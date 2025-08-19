@@ -7,10 +7,15 @@ import NotFoundPage from '@/pages/NotFoundPage'
 import { lazy } from 'react'
 import { createBrowserRouter, Outlet } from 'react-router-dom'
 
+// Dashboard
 const Dashboard = lazy(() => import('@/features/dashboard/DashboardPage'))
+
+// Users
 const Users = lazy(() => import('@/features/users'))
 const UserDetailPage = lazy(() => import('@/features/users/UserDetailPage'))
 const CreateUserPage = lazy(() => import('@/features/users/CreateUserPage'))
+
+// Products
 const Products = lazy(() => import('@/features/products/ProductListPage'))
 const ProductDetailPage = lazy(
   () => import('@/features/products/ProductDetailPage')
@@ -18,7 +23,11 @@ const ProductDetailPage = lazy(
 const CreateUpdateProductPage = lazy(
   () => import('@/features/products/CreateUpdateProductPage')
 )
+
+// Chat
 const ChatPage = lazy(() => import('@/features/chat/ChatPage'))
+
+// Categories
 // const ListCategoryPage = lazy(
 //   () => import('@/features/categories/ListCategoryPage')
 // )
@@ -31,15 +40,23 @@ const CreateRootCategoryPage = lazy(
 const CreateSubCategoryPage = lazy(
   () => import('@/features/categories/CreateSubCategoryPage')
 )
+
+// Brands
 const ListBrandPage = lazy(() => import('@/features/brands/ListBrandPage'))
 const CreateBrandPage = lazy(() => import('@/features/brands/CreateBrandPage'))
+
+// Product Property
 const ListProductPropertyPage = lazy(
   () => import('@/features/product-property/ListProductPropertyPage')
 )
 const CreateProductPropertyPage = lazy(
   () => import('@/features/product-property/CreateProductPropertyPage')
 )
+
+// Video Call
 const VideoCallPage = lazy(() => import('@/features/video-call/VideoCallPage'))
+
+// Feedbacks
 const ListFeedbackPage = lazy(
   () => import('@/features/feedbacks/ListFeedbackPage')
 )
@@ -49,10 +66,17 @@ const FeedbackDetailPage = lazy(
 const RespondFeedbackPage = lazy(
   () => import('@/features/feedbacks/RespondFeedbackPage')
 )
+
+// Reports
 const ListReportPage = lazy(() => import('@/features/reports/ListReportPage'))
 const CreateUpdateReportPage = lazy(
   () => import('@/features/reports/CreateUpdateReportPage')
 )
+const ReportDetailsPage = lazy(
+  () => import('@/features/reports/ReportDetailsPage')
+)
+
+// Promotions
 const ListPromotionPage = lazy(
   () => import('@/features/promotions/ListPromotionPage')
 )
@@ -350,6 +374,17 @@ export const router = createBrowserRouter([
             ),
             handle: {
               title: 'Create Report',
+            },
+          },
+          {
+            path: ':id',
+            element: (
+              <AuthGuard roles={[Role.ADMIN]}>
+                <ReportDetailsPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Report information',
             },
           },
         ],

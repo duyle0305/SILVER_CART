@@ -40,7 +40,6 @@ import { useNotification } from '@/hooks/useNotification'
 import dayjs from 'dayjs'
 import { useBanOrUnbanUser } from './hooks/useBanOrUnbanUser'
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
-import HomeIcon from '@mui/icons-material/Home'
 import ContactPhoneIcon from '@mui/icons-material/ContactPhone'
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom'
 
@@ -83,12 +82,10 @@ const UserDetailPage = () => {
   }
 
   const { data, isLoading, error, refetch } = useUserDetail(id || '')
-  const {
-    data: guardian,
-    isLoading: isGuardianLoading,
-    error: guardianError,
-    refetch: refetchGuardian,
-  } = useUserDetail(data?.guardianId ?? '', !data?.guardianId)
+  const { data: guardian, refetch: refetchGuardian } = useUserDetail(
+    data?.guardianId ?? '',
+    !data?.guardianId
+  )
 
   const isBanned = !!data?.isDeleted
   const banButtonCfg = useMemo(
