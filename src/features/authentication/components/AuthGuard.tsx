@@ -18,7 +18,20 @@ export function AuthGuard({ children, roles }: AuthGuardProps) {
   const hasRequiredRole = !roles || (user && roles.includes(user.role))
 
   if (!hasRequiredRole) {
-    return <Navigate to={user?.role === Role.ADMIN ? '/' : '/users'} replace />
+    const redirectPath = (role: Role) => {
+      switch (role) {
+        case Role.ADMIN:
+          return '/'
+        case Role.CONSULTANT:
+          return '/products'
+        case Role.STAFF:
+          return '/orders'
+        default:
+          return '/login'
+      }
+    }
+
+    return <Navigate to={redirectPath(user?.role ?? Role.UNKNOWN)} replace />
   }
 
   return <>{children}</>

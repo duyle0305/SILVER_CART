@@ -21,6 +21,6 @@ apiClient.interceptors.request.use(
 )
 
 apiClient.interceptors.response.use(
-  (response) => response.data.data,
+  (response) => response.data.data || response.data,
   createAuthRefreshInterceptor()
 )

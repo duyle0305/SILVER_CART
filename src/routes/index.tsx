@@ -87,6 +87,10 @@ const CreateUpdatePromotionPage = lazy(
   () => import('@/features/promotions/CreateUpdatePromotionPage')
 )
 
+// Orders
+const OrderDetailPage = lazy(() => import('@/features/orders/OrderDetailPage'))
+const ListOrderPage = lazy(() => import('@/features/orders/ListOrderPage'))
+
 export const router = createBrowserRouter([
   {
     element: <GuestGuard />,
@@ -436,6 +440,34 @@ export const router = createBrowserRouter([
             ),
             handle: {
               title: 'Promotion information',
+            },
+          },
+        ],
+      },
+      {
+        path: 'orders',
+        element: <Outlet />,
+        handle: {
+          title: 'Order Management',
+        },
+        children: [
+          {
+            index: true,
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewOrders}>
+                <ListOrderPage />
+              </AuthGuard>
+            ),
+          },
+          {
+            path: ':id',
+            element: (
+              <AuthGuard roles={authorizationAction.allowViewOrders}>
+                <OrderDetailPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Order information',
             },
           },
         ],

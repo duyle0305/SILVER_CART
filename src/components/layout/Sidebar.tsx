@@ -22,6 +22,7 @@ import RateReviewIcon from '@mui/icons-material/RateReview'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import LocalOfferIcon from '@mui/icons-material/LocalOffer'
 import { ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
+import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 
@@ -47,8 +48,8 @@ const Sidebar = () => {
       items.push({
         name: 'Management',
         items: [
-          { text: 'Users', icon: <PeopleIcon />, path: '/users' },
           { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+          { text: 'Users', icon: <PeopleIcon />, path: '/users' },
           {
             text: 'Categories',
             icon: <CategoryIcon />,
@@ -79,12 +80,17 @@ const Sidebar = () => {
         {
           name: 'Management',
           items: [
-            { text: 'Users', icon: <PeopleIcon />, path: '/users' },
             { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+            { text: 'Users', icon: <PeopleIcon />, path: '/users' },
             {
               text: 'Promotions',
               icon: <LocalOfferIcon />,
               path: '/promotions',
+            },
+            {
+              text: 'Reports',
+              icon: <AssessmentIcon />,
+              path: '/reports',
             },
           ],
         },
@@ -107,8 +113,13 @@ const Sidebar = () => {
         {
           name: 'Management',
           items: [
-            { text: 'Users', icon: <PeopleIcon />, path: '/users' },
+            {
+              text: 'Orders',
+              icon: <LocalShippingIcon />,
+              path: '/orders',
+            },
             { text: 'Products', icon: <InventoryIcon />, path: '/products' },
+            { text: 'Users', icon: <PeopleIcon />, path: '/users' },
             {
               text: 'Promotions',
               icon: <LocalOfferIcon />,
@@ -118,6 +129,11 @@ const Sidebar = () => {
               text: 'Feedbacks',
               icon: <RateReviewIcon />,
               path: '/feedbacks',
+            },
+            {
+              text: 'Reports',
+              icon: <AssessmentIcon />,
+              path: '/reports',
             },
           ],
         },
