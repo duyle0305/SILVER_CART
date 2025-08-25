@@ -34,7 +34,12 @@ export default function ListRootCategory() {
   }
 
   const renderRow = (row: Category, _: boolean, index: number) => (
-    <TableRow key={row.id} hover onClick={() => handleRowClick(row.id)}>
+    <TableRow
+      key={row.id}
+      hover
+      onClick={() => handleRowClick(row.id)}
+      sx={{ cursor: 'pointer' }}
+    >
       <TableCell>{index + 1}</TableCell>
       <TableCell>{row.label}</TableCell>
       <TableCell>{row.note}</TableCell>
