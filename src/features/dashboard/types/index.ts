@@ -54,3 +54,23 @@ export interface CurrentStatisticResponse {
     percentageCompareLastMonth: number
   }
 }
+
+export interface PaymentHistoryBodyParam {
+  startDate: string
+  endDate: string
+  userId: string | null
+  page: number
+  pageSize: number
+}
+
+export interface PaymentHistoryItem {
+  id: string
+  amount: number
+  userId: string
+  userName: string
+  avatar: string | null
+  paymentMenthod: string
+  paymentStatus: number
+  creationDate: string
+  orderId: string
+}

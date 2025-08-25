@@ -20,6 +20,10 @@ export const getOrderDetail = async (
   })
 }
 
-export const changeStatusOrder = async (orderId: string) => {
+export const fakeGHNChangeStatus = async (orderId: string) => {
   await apiClient.post(`Shipping/${orderId}/FakeGHNChangeStatus`)
+}
+
+export const createOrderInGHN = async (orderId: string) => {
+  await apiClient.post(`Shipping/${orderId}/CreateOrderInGHN`)
 }

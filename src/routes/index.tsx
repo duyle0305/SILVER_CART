@@ -34,6 +34,10 @@ const ChatPage = lazy(() => import('@/features/chat/ChatPage'))
 const ListRootCategoryPage = lazy(
   () => import('@/features/categories/ListRootCategory')
 )
+const SubCategoryDetailPage = lazy(
+  () => import('@/features/categories/SubCategoryDetailPage')
+)
+
 const CreateRootCategoryPage = lazy(
   () => import('@/features/categories/CreateRootCategoryPage')
 )
@@ -224,6 +228,13 @@ export const router = createBrowserRouter([
             element: <ListRootCategoryPage />,
           },
           {
+            path: 'sub-category/:id',
+            element: <SubCategoryDetailPage />,
+            handle: {
+              title: 'Sub Category Detail',
+            },
+          },
+          {
             path: 'add-root',
             element: <CreateRootCategoryPage />,
             handle: {
@@ -303,7 +314,7 @@ export const router = createBrowserRouter([
       },
       // Video Call
       {
-        path: 'video-call',
+        path: 'video-call/:connectionId',
         element: (
           <AuthGuard roles={authorizationAction.allowVideoCall}>
             <VideoCallPage />
@@ -364,7 +375,7 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <AuthGuard roles={[Role.ADMIN]}>
+              <AuthGuard roles={[Role.ADMIN, Role.STAFF, Role.CONSULTANT]}>
                 <ListReportPage />
               </AuthGuard>
             ),
@@ -381,9 +392,20 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'edit/:id',
+            element: (
+              <AuthGuard roles={[Role.CONSULTANT]}>
+                <CreateUpdateReportPage />
+              </AuthGuard>
+            ),
+            handle: {
+              title: 'Edit Report',
+            },
+          },
+          {
             path: ':id',
             element: (
-              <AuthGuard roles={[Role.ADMIN]}>
+              <AuthGuard roles={[Role.ADMIN, Role.STAFF, Role.CONSULTANT]}>
                 <ReportDetailsPage />
               </AuthGuard>
             ),

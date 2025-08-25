@@ -5,20 +5,27 @@ import PersonIcon from '@mui/icons-material/Person'
 import {
   Avatar,
   Box,
+  Button,
   Card,
   CardContent,
-  Divider,
   Grid,
   Stack,
   Typography,
 } from '@mui/material'
 import { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useUserDetail } from '../users/hooks/useUserDetail'
 import { useReportDetail } from './hooks/useReportDetail'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { authorizationAction } from '../authentication/constants'
 
 export default function ReportDetailsPage() {
   const { id = '' } = useParams()
+  const navigate = useNavigate()
+  const { user: currentUser } = useAuthContext()
+  const allowWriteReport =
+    currentUser?.role &&
+    authorizationAction.allowWriteReport.includes(currentUser.role)
   const { data: report, isLoading, isError } = useReportDetail(id)
   const { data: user, isLoading: isUserLoading } = useUserDetail(
     report?.userId ?? '',
@@ -49,10 +56,27 @@ export default function ReportDetailsPage() {
     <Box p={3}>
       <Card variant="outlined">
         <CardContent>
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            Report Details
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            width="100%"
+            sx={{ mb: 5 }}
+          >
+            <Typography variant="h4" fontWeight="bold" color="primary">
+              Report Details
+            </Typography>
+            {allowWriteReport && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate(`/reports/edit/${id}`)}
+              >
+                Edit
+              </Button>
+            )}
+          </Stack>
 
           <Stack spacing={3}>
             <Box>

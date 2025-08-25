@@ -71,3 +71,16 @@ export const getRootListValueCategory = async (
     }
   )
 }
+
+export const getListValueCategoryById = async (
+  id: string,
+  signal: AbortSignal
+) => {
+  return await apiClient.get<RootCategory[]>(
+    'Category/GetListValueCategoryById',
+    {
+      params: { id },
+      signal,
+    }
+  )
+}

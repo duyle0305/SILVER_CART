@@ -23,4 +23,5 @@ export const authorizationAction = {
   allowViewPromotion: [Role.ADMIN, Role.CONSULTANT, Role.STAFF],
   allowWritePromotion: [Role.ADMIN],
   allowViewOrders: [Role.STAFF],
+  allowWriteReport: [Role.CONSULTANT],
 }

@@ -15,6 +15,7 @@ export interface ReportQueryParams {
   pageSize: number
   sortBy: string
   sortAscending: boolean
+  consultantId?: string
 }
 
 export interface Report {

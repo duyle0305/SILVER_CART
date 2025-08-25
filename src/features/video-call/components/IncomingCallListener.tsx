@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { Role } from '@/features/authentication/constants'
 import {
-  Avatar,
   Button,
   Dialog,
   DialogActions,
@@ -10,8 +10,11 @@ import {
   Typography,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { onIncomingCall, type IncomingCallPayload } from '@/lib/callSignaling'
+import { useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useGetConnection } from '../hooks/useGetConnection'
+import type { Connection } from '../types'
+import { useDeclineCall } from '../hooks/useDeclineCall'
 
 const CallerRow = styled(Stack)(({ theme }) => ({
   alignItems: 'center',
@@ -19,56 +22,81 @@ const CallerRow = styled(Stack)(({ theme }) => ({
   marginBottom: theme.spacing(1),
 }))
 
+const stashConnection = (conn: Connection) => {
+  if (!conn?.id) return
+  sessionStorage.setItem(`vc:conn:${conn.id}`, JSON.stringify(conn))
+}
+
+const isDismissed = (id?: string) => {
+  if (!id) return false
+  return sessionStorage.getItem(`vc:dismiss:${id}`) === '1'
+}
+
+const markDismissed = (id?: string) => {
+  if (!id) return
+  sessionStorage.setItem(`vc:dismiss:${id}`, '1')
+}
+
 export default function IncomingCallListener() {
-  const [incoming, setIncoming] = useState<IncomingCallPayload | null>(null)
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useAuthContext()
 
   const isInCallPage = useMemo(
     () => location.pathname.includes('/video-call'),
     [location.pathname]
   )
 
-  useEffect(() => {
-    const off = onIncomingCall((payload) => {
-      if (isInCallPage) return
-      setIncoming(payload)
-    })
-    return off
-  }, [isInCallPage])
+  const { mutateAsync: declineCall, isPending: declining } = useDeclineCall()
 
-  const handleDecline = () => setIncoming(null)
+  const enabled =
+    !!user?.userId && user?.role === Role.CONSULTANT && !isInCallPage
+
+  const { data: connection } = useGetConnection(user?.userId ?? '', enabled)
+
+  const isCall = connection?.type === 'CALL'
+  const open =
+    !!connection && isCall && !isInCallPage && !isDismissed(connection?.id)
+
+  const handleDecline = async () => {
+    try {
+      if (connection?.id) {
+        await declineCall(user?.userId ?? '')
+        markDismissed(connection.id)
+      }
+    } catch {
+      if (connection?.id) markDismissed(connection.id)
+    }
+  }
 
   const handleAccept = () => {
-    if (!incoming) return
+    if (!connection) return
+    stashConnection(connection)
+
     const params = new URLSearchParams()
-    params.set('channel', incoming.channel)
-    if (incoming.token) params.set('token', String(incoming.token))
-    if (incoming.uid !== undefined && incoming.uid !== null)
-      params.set('uid', String(incoming.uid))
-    navigate(`/video-call?${params.toString()}`)
-    setIncoming(null)
+    params.set('channel', connection.channelName)
+    if (connection.token) params.set('token', connection.token)
+
+    navigate(`/video-call/${connection.id}?${params.toString()}`, {
+      state: { connection },
+      replace: false,
+    })
   }
 
   return (
-    <Dialog open={!!incoming} onClose={handleDecline}>
+    <Dialog open={open} onClose={handleDecline}>
       <DialogTitle>Incoming call</DialogTitle>
       <DialogContent>
         <CallerRow direction="row">
-          <Avatar
-            src={incoming?.avatarUrl}
-            alt={incoming?.callerName}
-            sx={{ width: 36, height: 36 }}
-          />
-          <Typography fontWeight={600}>{incoming?.callerName}</Typography>
+          <Typography fontWeight={600}>{connection?.fullName}</Typography>
         </CallerRow>
         <Typography variant="body2">is calling you…</Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleDecline} variant="outlined">
+        <Button onClick={handleDecline} variant="outlined" loading={declining}>
           Decline
         </Button>
-        <Button onClick={handleAccept} variant="contained">
+        <Button onClick={handleAccept} variant="contained" loading={declining}>
           Accept
         </Button>
       </DialogActions>

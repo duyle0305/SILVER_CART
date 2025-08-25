@@ -50,8 +50,8 @@ export function useAgoraCall({
         if (mediaType === 'video' && user.videoTrack)
           user.videoTrack.play(`remote-${user.uid}`)
         if (mediaType === 'audio' && user.audioTrack) user.audioTrack.play()
-      } catch (e: any) {
-        setError(e?.message || String(e))
+      } catch (e: unknown) {
+        setError((e as Error)?.message || String(e))
       }
     }
 
@@ -89,8 +89,8 @@ export function useAgoraCall({
       setIsMicOn(true)
       setIsCamOn(true)
       return uidJoined
-    } catch (e: any) {
-      setError(e?.message || String(e))
+    } catch (e: unknown) {
+      setError((e as Error)?.message || String(e))
       throw e
     }
   }, [appId, channel, token, uid])

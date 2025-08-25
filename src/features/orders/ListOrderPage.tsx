@@ -12,6 +12,7 @@ import OrderTableToolbar from './components/OrderTableToolbar'
 import { OrderStatus } from './constants'
 import { useOrders } from './hooks/useOrders'
 import type { Order } from './types'
+import dayjs from 'dayjs'
 
 const orderHeadCells: readonly HeadCell<Order>[] = [
   { id: 'order', label: 'Order' },
@@ -20,11 +21,15 @@ const orderHeadCells: readonly HeadCell<Order>[] = [
   { id: 'totalPrice', label: 'Total' },
   { id: 'orderStatus', label: 'Status' },
   { id: 'items', label: 'Items' },
+  { id: 'creationDate', label: 'Created At' },
 ]
 
 export default function ListOrderPage() {
   const navigate = useNavigate()
-  const table = useTable<Order>({ initialOrderBy: 'totalPrice' })
+  const table = useTable<Order>({
+    initialOrderBy: 'creationDate',
+    initialOrder: SortType.Descending,
+  })
   const { showNotification } = useNotification()
 
   const [filters, setFilters] = useState<OrderFilter>({
@@ -86,26 +91,44 @@ export default function ListOrderPage() {
 
   const renderStatus = (status: OrderStatus | string) => {
     let color: 'success' | 'warning' | 'info' | 'error' | 'default' = 'default'
+    let label = ''
     switch (status) {
       case 'Paid':
         color = 'success'
+        label = 'Paid'
         break
       case 'PendingChecked':
+        color = 'warning'
+        label = 'Pending Checked'
+        break
       case 'PendingConfirm':
+        color = 'warning'
+        label = 'Pending Confirm'
+        break
       case 'PendingPickup':
+        color = 'warning'
+        label = 'Pending Pickup'
+        break
       case 'PendingDelivery':
         color = 'warning'
+        label = 'Pending Delivery'
         break
       case 'Shipping':
         color = 'info'
+        label = 'Shipping'
+        break
+      case 'Delivered':
+        color = 'success'
+        label = 'Delivered'
         break
       case 'Canceled':
         color = 'error'
+        label = 'Canceled'
         break
       default:
         color = 'default'
     }
-    return <Chip size="small" label={status} color={color} />
+    return <Chip size="small" label={label} color={color} />
   }
 
   const renderRow = (order: Order, _: boolean, index: number) => (
@@ -114,7 +137,7 @@ export default function ListOrderPage() {
       <TableCell>
         <Stack spacing={0.5}>
           <Typography variant="subtitle2" noWrap sx={{ maxWidth: 340 }}>
-            #{order.id}
+            #{order.id.slice(0, 8).toUpperCase()}
           </Typography>
           {order.note && (
             <Typography
@@ -165,6 +188,9 @@ export default function ListOrderPage() {
             {renderItems(order)}
           </Typography>
         </Tooltip>
+      </TableCell>
+      <TableCell>
+        {dayjs(order.creationDate).format('DD/MM/YYYY HH:mm')}
       </TableCell>
     </StyledTableRow>
   )

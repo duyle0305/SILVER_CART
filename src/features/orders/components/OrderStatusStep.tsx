@@ -5,6 +5,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import PendingActionsIcon from '@mui/icons-material/PendingActions'
 import StorefrontIcon from '@mui/icons-material/Storefront'
 import VerifiedIcon from '@mui/icons-material/Verified'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import { Box, Step, StepLabel, Stepper, Typography } from '@mui/material'
 import {
   ColorConnector,
@@ -19,6 +20,7 @@ export type TOrderStatus =
   | 'PendingPickup'
   | 'PendingDelivery'
   | 'Shipping'
+  | 'Delivered'
   | 'Canceled'
 
 const PIPELINE: Array<{
@@ -36,6 +38,11 @@ const PIPELINE: Array<{
     Icon: PendingActionsIcon,
   },
   { key: 'Shipping', label: 'Shipping', Icon: LocalShippingIcon },
+  {
+    key: 'Delivered',
+    label: 'Delivered',
+    Icon: CheckCircleOutlineIcon,
+  },
 ]
 
 export interface OrderStatusStepsProps {
@@ -54,7 +61,7 @@ export default function OrderStatusSteps({ status }: OrderStatusStepsProps) {
         <Box display="flex" alignItems="center" gap={1}>
           <CancelIcon color="error" />
           <Typography variant="subtitle1" color="error" fontWeight={600}>
-            Đã hủy
+            Canceled
           </Typography>
         </Box>
       ) : (

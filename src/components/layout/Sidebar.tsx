@@ -17,7 +17,6 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import PeopleIcon from '@mui/icons-material/People'
 import SettingsIcon from '@mui/icons-material/Settings'
 import StorefrontIcon from '@mui/icons-material/Storefront'
-import VideoCallIcon from '@mui/icons-material/VideoCall'
 import RateReviewIcon from '@mui/icons-material/RateReview'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import LocalOfferIcon from '@mui/icons-material/LocalOffer'
@@ -98,11 +97,11 @@ const Sidebar = () => {
           name: 'General',
           items: [
             { text: 'Chat Box', icon: <ChatIcon />, path: '/chat' },
-            {
-              text: 'Video Call',
-              icon: <VideoCallIcon />,
-              path: '/video-call',
-            },
+            // {
+            //   text: 'Video Call',
+            //   icon: <VideoCallIcon />,
+            //   path: '/video-call',
+            // },
           ],
         }
       )

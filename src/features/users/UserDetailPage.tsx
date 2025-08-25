@@ -42,6 +42,9 @@ import { useBanOrUnbanUser } from './hooks/useBanOrUnbanUser'
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
 import ContactPhoneIcon from '@mui/icons-material/ContactPhone'
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom'
+import { useReportByUserId } from '../reports/hooks/useReportByUserId'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { authorizationAction, Role } from '../authentication/constants'
 
 const genderLabel = (gender?: number) =>
   gender === 1
@@ -70,8 +73,23 @@ const Metric: React.FC<{
   </Card>
 )
 
+const ConsultantName: React.FC<{ consultantId?: string }> = ({
+  consultantId,
+}) => {
+  const { data: consultant } = useUserDetail(consultantId ?? '')
+
+  return (
+    <Typography variant="body2">
+      {consultant?.fullName || 'Unknown Consultant'}
+    </Typography>
+  )
+}
+
 const UserDetailPage = () => {
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuthContext()
+  const allowModifyUsers =
+    user?.role && authorizationAction.allowCreateUser.includes(user.role)
   const navigate = useNavigate()
   const { showLoader, hideLoader } = useLoader()
   const { showNotification } = useNotification()
@@ -86,6 +104,7 @@ const UserDetailPage = () => {
     data?.guardianId ?? '',
     !data?.guardianId
   )
+  const { data: reports, isError: isErrorReports } = useReportByUserId(id || '')
 
   const isBanned = !!data?.isDeleted
   const banButtonCfg = useMemo(
@@ -128,6 +147,12 @@ const UserDetailPage = () => {
     }
   }, [data, refetchGuardian])
 
+  useEffect(() => {
+    if (isErrorReports) {
+      showNotification('Failed to load user reports', 'error')
+    }
+  }, [isErrorReports])
+
   const handleConfirm = async () => {
     if (!id) return
     try {
@@ -146,6 +171,10 @@ const UserDetailPage = () => {
       hideLoader()
       closeConfirm()
     }
+  }
+
+  const openReportDetail = (reportId: string) => {
+    navigate(`/reports/${reportId}`)
   }
 
   return (
@@ -233,16 +262,18 @@ const UserDetailPage = () => {
               </Stack>
             </Grid>
 
-            <Grid>
-              <Button
-                variant={isBanned ? 'outlined' : 'contained'}
-                color={banButtonCfg.color}
-                startIcon={banButtonCfg.icon}
-                onClick={openConfirm}
-              >
-                {banButtonCfg.text}
-              </Button>
-            </Grid>
+            {allowModifyUsers && (
+              <Grid>
+                <Button
+                  variant={isBanned ? 'outlined' : 'contained'}
+                  color={banButtonCfg.color}
+                  startIcon={banButtonCfg.icon}
+                  onClick={openConfirm}
+                >
+                  {banButtonCfg.text}
+                </Button>
+              </Grid>
+            )}
           </Grid>
         </CardContent>
       </Card>
@@ -476,6 +507,56 @@ const UserDetailPage = () => {
           ) : (
             <Typography variant="body2" color="text.secondary">
               No addresses
+            </Typography>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+        <CardContent>
+          <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
+            Consultantion History
+          </Typography>
+
+          {reports?.length ? (
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Supported By</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {reports.map((report) => (
+                    <TableRow
+                      key={report.id}
+                      hover
+                      onClick={() => {
+                        if (
+                          user?.role === Role.ADMIN ||
+                          user?.role === Role.CONSULTANT
+                        ) {
+                          openReportDetail(report.id)
+                        }
+                      }}
+                    >
+                      <TableCell sx={{ maxWidth: 320 }}>
+                        <Typography variant="body2">{report.title}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <ConsultantName consultantId={report.consultantId} />
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No consultation history
             </Typography>
           )}
         </CardContent>

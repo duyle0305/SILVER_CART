@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { changeStatusOrder } from '../services/ordersService'
+import { fakeGHNChangeStatus } from '../services/ordersService'
 import { useNotification } from '@/hooks/useNotification'
 
-export const useChangeStatusOrder = () => {
+export const useFakeGHNChangeStatus = () => {
   const { showNotification } = useNotification()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ orderId }: { orderId: string }) =>
-      changeStatusOrder(orderId),
+      fakeGHNChangeStatus(orderId),
     onSuccess: () => {
       showNotification('Order status changed successfully', 'success')
       queryClient.invalidateQueries({ queryKey: ['orderDetail'] })

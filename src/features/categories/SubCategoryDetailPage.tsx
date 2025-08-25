@@ -1,8 +1,9 @@
-import { BaseTable } from '@/components/common/BaseTable'
 import type { HeadCell } from '@/components/common/BaseTableHead'
+import type { RootCategory } from './types'
+import { useListValueCategoryById } from './hooks/useListValueCategoryById'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useNotification } from '@/hooks/useNotification'
-import { useTable } from '@/hooks/useTable'
-import AddIcon from '@mui/icons-material/Add'
 import {
   Button,
   Paper,
@@ -11,39 +12,36 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useCategories } from './hooks/useCategories'
-import type { Category } from './types'
+import AddIcon from '@mui/icons-material/Add'
+import { BaseTable } from '@/components/common/BaseTable'
+import { useTable } from '@/hooks/useTable'
 
-const headCells: readonly HeadCell<Category>[] = [
+const subCategoryHeadCells: readonly HeadCell<RootCategory>[] = [
+  { id: 'code', label: 'Code' },
   { id: 'label', label: 'Label' },
-  { id: 'note', label: 'Note' },
+  { id: 'description', label: 'Description' },
 ]
 
-export default function ListRootCategory() {
-  const { data = [], isLoading, isError } = useCategories()
-  const table = useTable<Category>({
+export default function SubCategoryDetailPage() {
+  const { id = '' } = useParams()
+  const navigate = useNavigate()
+  const { data = [], isLoading, isError } = useListValueCategoryById(id)
+  const table = useTable<RootCategory>({
     initialOrderBy: 'code',
   })
-  const navigate = useNavigate()
   const { showNotification } = useNotification()
-
-  const handleRowClick = (id: string) => {
-    navigate(`sub-category/${id}`)
-  }
-
-  const renderRow = (row: Category, _: boolean, index: number) => (
-    <TableRow key={row.id} hover onClick={() => handleRowClick(row.id)}>
+  const renderRow = (row: RootCategory, _: boolean, index: number) => (
+    <TableRow key={row.id} hover>
       <TableCell>{index + 1}</TableCell>
+      <TableCell>{row.code}</TableCell>
       <TableCell>{row.label}</TableCell>
-      <TableCell>{row.note}</TableCell>
+      <TableCell>{row.description}</TableCell>
     </TableRow>
   )
 
   useEffect(() => {
     if (isError) {
-      showNotification('Load root categories failed', 'error')
+      showNotification('Load sub-category failed', 'error')
     }
   }, [isError, showNotification])
 
@@ -57,19 +55,19 @@ export default function ListRootCategory() {
         sx={{ mb: 2 }}
       >
         <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
-          All root categories
+          All sub-categories
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/categories/add-root')}
+          onClick={() => navigate('/categories/add-sub')}
         >
-          Add root category
+          Add sub-category
         </Button>
       </Stack>
-      <BaseTable<Category>
+      <BaseTable<RootCategory>
         data={data}
-        headCells={headCells}
+        headCells={subCategoryHeadCells}
         isLoading={isLoading}
         table={table}
         pageCount={0}

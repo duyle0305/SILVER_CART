@@ -1,112 +1,50 @@
 import { config } from '@/config'
+import { useAuthContext } from '@/contexts/AuthContext'
 import CallEndRoundedIcon from '@mui/icons-material/CallEndRounded'
-import {
-  Avatar,
-  Button,
-  Container,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material'
-import { styled } from '@mui/material/styles'
+import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded'
+import MicRoundedIcon from '@mui/icons-material/MicRounded'
+import { Avatar, Container, Stack, Tooltip, Typography } from '@mui/material'
 import AgoraRTC, {
   type IAgoraRTCClient,
   type ICameraVideoTrack,
   type IMicrophoneAudioTrack,
 } from 'agora-rtc-sdk-ng'
-import { useEffect, useRef, useState } from 'react'
-import MicRoundedIcon from '@mui/icons-material/MicRounded'
-import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
+import {
+  CircleButton,
+  Controls,
+  ControlWithLabel,
+  Frame,
+  Header,
+  LocalVideoPip,
+  RemoteVideo,
+  Root,
+} from './components/styles/VideoCallPage.style'
+import { useDisconnectFromChannel } from './hooks/useDisconnectFromChannel'
+import type { Connection } from './types'
 
-const CHANNEL = 'test_phat'
+const SS_KEY = (id: string) => `vc:conn:${id}`
 
-const Root = styled('div')(({ theme }) => ({
-  minHeight: '100%',
-  background: theme.palette.grey[100],
-  display: 'flex',
-  alignItems: 'center',
-}))
-
-const Frame = styled(Paper)(({ theme }) => ({
-  position: 'relative',
-  width: '100%',
-  height: '80vh',
-  borderRadius: 12,
-  padding: 0,
-  background: theme.palette.grey[50],
-  boxShadow: 'none',
-  border: `1px solid ${theme.palette.grey[200]}`,
-  overflow: 'hidden',
-}))
-
-const Header = styled('div')(({ theme }) => ({
-  position: 'absolute',
-  top: theme.spacing(2),
-  left: theme.spacing(2),
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(1.5),
-  zIndex: 2,
-}))
-
-const Controls = styled('div')(({ theme }) => ({
-  position: 'absolute',
-  left: '50%',
-  transform: 'translateX(-50%)',
-  bottom: theme.spacing(2.5),
-  display: 'flex',
-  gap: theme.spacing(4),
-  zIndex: 5,
-}))
-
-const CircleButton = styled(Button)(() => ({
-  minWidth: 0,
-  width: 56,
-  height: 56,
-  borderRadius: '999px',
-  boxShadow: 'none',
-  textTransform: 'none',
-  padding: 0,
-}))
-
-const RemoteVideo = styled('div')({
-  position: 'absolute',
-  inset: 0,
-  backgroundColor: '#eee',
-  overflow: 'hidden',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  pointerEvents: 'none',
-  video: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-})
-
-const LocalVideoPip = styled('div')({
-  position: 'absolute',
-  width: 180,
-  aspectRatio: '16 / 9',
-  borderRadius: 12,
-  overflow: 'hidden',
-  backgroundColor: '#eee',
-  boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-  transform: 'scaleX(-1)',
-  zIndex: 2,
-  cursor: 'grab',
-  touchAction: 'none',
-})
-
-const ControlWithLabel = styled('div')(({ theme }) => ({
-  display: 'grid',
-  justifyItems: 'center',
-  gap: theme.spacing(1),
-}))
+const unstashConnection = (id?: string): Connection | null => {
+  if (!id) return null
+  try {
+    const raw = sessionStorage.getItem(SS_KEY(id))
+    return raw ? (JSON.parse(raw) as Connection) : null
+  } catch {
+    return null
+  }
+}
 
 export default function VideoCallPage() {
+  const navigate = useNavigate()
+  const { user: consultant } = useAuthContext()
+  const leavingRef = useRef(false)
   const frameRef = useRef<HTMLDivElement | null>(null)
   const [client] = useState<IAgoraRTCClient>(() =>
     AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
@@ -127,6 +65,32 @@ export default function VideoCallPage() {
   const videoRef = useRef<ICameraVideoTrack | null>(null)
   const audioRef = useRef<IMicrophoneAudioTrack | null>(null)
   const joinedRef = useRef(false)
+
+  const { state } = useLocation() as { state?: { connection?: Connection } }
+  const { connectionId } = useParams<{ connectionId: string }>()
+  const [search] = useSearchParams()
+  const { mutateAsync: disconnect } = useDisconnectFromChannel()
+
+  const connection: Connection | null = useMemo(() => {
+    return state?.connection || unstashConnection(connectionId) || null
+  }, [state?.connection, connectionId])
+
+  const urlChannel = search.get('channel') ?? undefined
+  const urlToken = search.get('token') ?? undefined
+  const urlUidStr = search.get('uid')
+  const urlUid: number | null =
+    urlUidStr !== null && urlUidStr !== undefined
+      ? Number.isNaN(Number(urlUidStr))
+        ? null
+        : Number(urlUidStr)
+      : null
+
+  const CHANNEL = urlChannel ?? ''
+  const TOKEN: string | null = urlToken ?? null
+  const UID: number | null = urlUid
+
+  const HEADER_NAME = connection?.fullName ?? 'Customer'
+  const HEADER_AVATAR = ''
 
   const onPipPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
     const pip = e.currentTarget
@@ -171,66 +135,90 @@ export default function VideoCallPage() {
     pip.style.cursor = 'grab'
   }
 
-  const handleDisconnect = async () => {
+  const handleToggleMic = async () => {
+    const track = audioRef.current
+    const next = !micOn
+    setMicOn(next)
+
     try {
-      const tracks = [audioRef.current, videoRef.current].filter(Boolean) as (
-        | IMicrophoneAudioTrack
-        | ICameraVideoTrack
-      )[]
-      if (tracks.length) await client.unpublish(tracks)
-    } catch {}
-    audioRef.current?.close()
-    videoRef.current?.close()
-    await client.leave()
-    joinedRef.current = false
+      if (track && typeof track.setEnabled === 'function') {
+        await track.setEnabled(next)
+      }
+    } catch (e) {
+      console.error('Toggle mic failed:', e)
+    }
+
+    if (!next) {
+      speakingRef.current = false
+      setSpeaking(false)
+    }
   }
 
-  const handleToggleMic = async () => {
-    setMicOn((prev) => {
-      const next = !prev
-      const track = audioRef.current
+  const handleDisconnect = async () => {
+    if (leavingRef.current) return
+    leavingRef.current = true
 
-      if (track) {
-        ;(async () => {
-          try {
-            if (
-              'setEnabled' in track &&
-              typeof (track as any).setEnabled === 'function'
-            ) {
-              await (track as any).setEnabled(next)
-            } else if (
-              'setMuted' in track &&
-              typeof (track as any).setMuted === 'function'
-            ) {
-              await (track as any).setMuted(!next)
-            }
-          } catch (e) {
-            console.error('Toggle mic failed:', e)
-          }
-        })()
+    try {
+      try {
+        await disconnect?.(consultant?.userId ?? '')
+      } catch (e) {
+        console.warn('disconnect() failed:', e)
       }
 
-      if (!next) {
-        speakingRef.current = false
-        setSpeaking(false)
+      try {
+        const tracks = [audioRef.current, videoRef.current].filter(Boolean) as (
+          | IMicrophoneAudioTrack
+          | ICameraVideoTrack
+        )[]
+        if (tracks.length) await client.unpublish(tracks)
+      } catch (e) {
+        console.warn('unpublish failed:', e)
       }
 
-      return next
-    })
+      audioRef.current?.close()
+      videoRef.current?.close()
+
+      try {
+        await client.leave()
+      } catch (e) {
+        console.warn('leave failed:', e)
+      }
+      joinedRef.current = false
+    } finally {
+      const callerUserId = connection?.userId ?? ''
+      const qs = callerUserId
+        ? `?userId=${encodeURIComponent(callerUserId)}`
+        : ''
+      navigate(`/reports/add${qs}`, { replace: true })
+    }
   }
 
   useEffect(() => {
-    if (!CHANNEL) return
+    if (!CHANNEL) {
+      console.warn('No channel provided in query. Abort join.')
+      return
+    }
 
     let canceled = false
 
+    const onUserPublished = async (user: any, mediaType: 'audio' | 'video') => {
+      await client.subscribe(user, mediaType)
+      if (mediaType === 'video' && user.videoTrack) {
+        user.videoTrack.play('remote-player')
+      }
+      if (mediaType === 'audio' && user.audioTrack) {
+        user.audioTrack.play()
+      }
+    }
+
+    const onUserLeft = () => {
+      if (!leavingRef.current) {
+        void handleDisconnect()
+      }
+    }
+
     const init = async () => {
-      await client.join(
-        config.agoraAppId,
-        CHANNEL,
-        config.agoraToken || null,
-        null
-      )
+      await client.join(config.agoraAppId, CHANNEL, TOKEN, UID ?? null)
       if (canceled) return
       joinedRef.current = true
 
@@ -242,50 +230,41 @@ export default function VideoCallPage() {
       videoRef.current = videoTrack
 
       try {
-        if (
-          'setEnabled' in audioTrack &&
-          typeof (audioTrack as any).setEnabled === 'function'
-        ) {
-          await (audioTrack as any).setEnabled(micOn)
-        } else if (
-          'setMuted' in audioTrack &&
-          typeof (audioTrack as any).setMuted === 'function'
-        ) {
-          await (audioTrack as any).setMuted(!micOn)
-        }
+        await audioTrack.setEnabled(micOn)
       } catch (e) {
         console.error('Sync mic state failed:', e)
       }
 
       await client.publish([audioTrack, videoTrack])
-
       videoTrack.play('local-player')
     }
 
-    client.on('user-published', async (user, mediaType) => {
-      await client.subscribe(user, mediaType)
-
-      if (mediaType === 'video' && user.videoTrack) {
-        user.videoTrack.play('remote-player')
-      }
-      if (mediaType === 'audio' && user.audioTrack) {
-        user.audioTrack.play()
-      }
-    })
-
-    client.on('user-unpublished', (_user, mediaType) => {
-      if (mediaType === 'video') {
-      }
-    })
+    client.on('user-published', onUserPublished)
+    client.on('user-left', onUserLeft)
 
     init()
 
     return () => {
       canceled = true
+      client.off('user-published', onUserPublished)
+      client.off('user-left', onUserLeft)
       audioRef.current?.close()
       videoRef.current?.close()
       if (joinedRef.current) client.leave()
     }
+  }, [client, CHANNEL, TOKEN, UID])
+
+  useEffect(() => {
+    const onConnChange = (cur: string, _: string, __?: any) => {
+      if (
+        (cur === 'DISCONNECTED' || cur === 'DISCONNECTING') &&
+        !leavingRef.current
+      ) {
+        void handleDisconnect()
+      }
+    }
+    client.on('connection-state-change', onConnChange)
+    return () => client.off('connection-state-change', onConnChange)
   }, [client])
 
   useEffect(() => {
@@ -309,12 +288,11 @@ export default function VideoCallPage() {
   }, [])
 
   useEffect(() => {
-    let intervalId: number | undefined
     const THRESHOLD = 0.06
     const QUIET_FRAMES = 4
 
     let quietCount = 0
-    intervalId = window.setInterval(() => {
+    const intervalId = window.setInterval(() => {
       const track = audioRef.current
       if (!track || !micOn) {
         if (speakingRef.current) {
@@ -323,7 +301,6 @@ export default function VideoCallPage() {
         }
         return
       }
-
       const level = track.getVolumeLevel?.() ?? 0
       if (level >= THRESHOLD) {
         quietCount = 0
@@ -350,9 +327,13 @@ export default function VideoCallPage() {
       <Container>
         <Frame ref={frameRef}>
           <Header sx={{ padding: 2 }}>
-            <Avatar src="" alt="Customer" sx={{ width: 28, height: 28 }} />
+            <Avatar
+              src={HEADER_AVATAR}
+              alt={HEADER_NAME}
+              sx={{ width: 28, height: 28 }}
+            />
             <Typography variant="body2" fontWeight={600}>
-              Customer
+              {HEADER_NAME}
             </Typography>
           </Header>
 

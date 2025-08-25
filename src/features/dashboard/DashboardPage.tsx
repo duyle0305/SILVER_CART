@@ -17,9 +17,10 @@ import {
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange'
 import LocalMallIcon from '@mui/icons-material/LocalMall'
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt'
-import { Divider, Grid, Skeleton, Typography } from '@mui/material'
+import { Box, Divider, Grid, Skeleton, Typography } from '@mui/material'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
+import PaymentHistoryTable from './components/PaymentHistoryTable'
 
 const metrics = [
   {
@@ -227,6 +228,9 @@ const DashboardPage = () => {
           </BestSellingWrapper>
         </Grid>
       </Grid>
+      <Box sx={{ mt: 4 }}>
+        <PaymentHistoryTable />
+      </Box>
     </DashboardWrapper>
   )
 }

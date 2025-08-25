@@ -10,7 +10,7 @@ import {
 } from '@mui/material'
 import { useEffect } from 'react'
 import { Controller, FormProvider, useForm } from 'react-hook-form'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RHFTiny } from './components/RHFTiny'
 import {
   createReportSchema,
@@ -27,7 +27,9 @@ import { useUpdateReport } from './hooks/useUpdateReport'
 export default function CreateUpdateReportPage() {
   const navigate = useNavigate()
   const { showNotification } = useNotification()
-  const { user } = useAuthContext()
+  const { user: consultant } = useAuthContext()
+  const [searchParams] = useSearchParams()
+  const userId = searchParams.get('userId')
   const { showLoader, hideLoader } = useLoader()
   const { id } = useParams()
   const isEditMode = !!id
@@ -54,7 +56,12 @@ export default function CreateUpdateReportPage() {
 
     if (isEditMode) {
       updateReport(
-        { id: id!, ...parsed },
+        {
+          ...parsed,
+          userId: reportDetail?.userId ?? '',
+          consultantId: reportDetail?.consultantId ?? '',
+          id: id!,
+        },
         {
           onSuccess: () => {
             showNotification('Report updated successfully!', 'success')
@@ -67,7 +74,11 @@ export default function CreateUpdateReportPage() {
       )
     } else {
       createReport(
-        { ...parsed, userId: '', consultantId: user?.userId ?? '' },
+        {
+          ...parsed,
+          userId: userId ?? '',
+          consultantId: consultant?.userId ?? '',
+        },
         {
           onSuccess: () => {
             showNotification('Report created successfully!', 'success')

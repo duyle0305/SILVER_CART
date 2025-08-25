@@ -24,6 +24,7 @@ export interface Order {
   customerName: string | null
   elderName: string
   orderDetails: OrderDetail[]
+  creationDate: string
 }
 
 export interface OrderQueryParams {

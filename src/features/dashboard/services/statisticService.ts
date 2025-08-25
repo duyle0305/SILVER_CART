@@ -2,6 +2,8 @@ import { TimeScope } from '@/features/dashboard/constants'
 import { apiClient } from '@/lib/axios'
 import type {
   CurrentStatisticResponse,
+  PaymentHistoryItem,
+  PaymentHistoryBodyParam,
   StatisticCustomers,
   StatisticOrders,
   StatisticProduct,
@@ -9,6 +11,7 @@ import type {
   TopNCustomersResponse,
   TopNProductsResponse,
 } from '../types'
+import type { BaseResponse } from '@/types/baseResponse.type'
 
 export const fetchStatisticsProducts = async (
   timeScope: TimeScope,
@@ -100,6 +103,18 @@ export const fetchCurrentStatistic = async (
 ): Promise<CurrentStatisticResponse> => {
   const response = await apiClient.get<CurrentStatisticResponse>(
     'Statistic/CurrentStatistics',
+    { signal }
+  )
+  return response
+}
+
+export const fetchPaymentHistory = async (
+  bodyParam: PaymentHistoryBodyParam,
+  signal: AbortSignal
+): Promise<BaseResponse<PaymentHistoryItem>> => {
+  const response = await apiClient.post<BaseResponse<PaymentHistoryItem>>(
+    'PaymentHistory/Search',
+    bodyParam,
     { signal }
   )
   return response

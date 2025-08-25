@@ -35,6 +35,7 @@ import {
   Switch,
   TextField,
   Typography,
+  type SelectChangeEvent,
 } from '@mui/material'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { isAxiosError } from 'axios'
@@ -49,10 +50,10 @@ import {
 import { useNavigate, useParams } from 'react-router-dom'
 import { useBrands } from '../brands/hooks/useBrands'
 import { useLeafCategories } from '../categories/hooks/useLeafCategories'
+import { useListProductProperty } from '../product-property/hooks/useListProductProperty'
 import FileUploader from './components/FileUploader'
 import PreviewDialog from './components/PreviewDialog'
 import VideoThumbnail from './components/VideoThumbnail'
-import { useAllValueProductProperty } from '../product-property/hooks/useAllValueProductProperty'
 import { useCreateProduct } from './hooks/useCreateProduct'
 import { useProductDetail } from './hooks/useProductDetail'
 import { useUpdateProduct } from './hooks/useUpdateProduct'
@@ -75,8 +76,10 @@ const CreateUpdateProductPage = () => {
   const { showLoader, hideLoader } = useLoader()
   const { data: leafCategories = [], isLoading: isLoadingCategories } =
     useLeafCategories()
-  const { data: productProperties = [], isLoading: isLoadingProperties } =
-    useAllValueProductProperty()
+  const {
+    data: listProductProperties = [],
+    isLoading: isLoadingListProperties,
+  } = useListProductProperty()
   const { mutateAsync: createProductMutation, isPending: isCreating } =
     useCreateProduct()
   const { data: brands = [], isLoading: isLoadingBrands } = useBrands()
@@ -452,6 +455,15 @@ const CreateUpdateProductPage = () => {
                     value={field.value ? dayjs(field.value) : null}
                     onChange={(date) => field.onChange(date?.toDate())}
                     sx={{ width: '100%' }}
+                    slotProps={{
+                      textField: {
+                        error: !!errors.manufactureDate,
+                        helperText:
+                          typeof errors.manufactureDate?.message === 'string'
+                            ? errors.manufactureDate?.message
+                            : undefined,
+                      },
+                    }}
                   />
                 )}
               />
@@ -466,6 +478,15 @@ const CreateUpdateProductPage = () => {
                     value={field.value ? dayjs(field.value) : null}
                     onChange={(date) => field.onChange(date?.toDate())}
                     sx={{ width: '100%' }}
+                    slotProps={{
+                      textField: {
+                        error: !!errors.expirationDate,
+                        helperText:
+                          typeof errors.expirationDate?.message === 'string'
+                            ? errors.expirationDate.message
+                            : undefined,
+                      },
+                    }}
                   />
                 )}
               />
@@ -585,57 +606,111 @@ const CreateUpdateProductPage = () => {
                       }
                     />
                   </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <FormControl
-                      fullWidth
-                      error={!!errors.productVariants?.[index]?.valueIds}
-                    >
-                      <InputLabel>Properties</InputLabel>
-                      <Controller
-                        name={`productVariants.${index}.valueIds`}
-                        control={control}
-                        defaultValue={[]}
-                        render={({ field }) => (
-                          <Select
-                            {...field}
-                            multiple
-                            label="Properties"
-                            disabled={isLoadingProperties}
-                            input={<OutlinedInput label="Properties" />}
-                            renderValue={(selected) => (
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  flexWrap: 'wrap',
-                                  gap: 0.5,
-                                }}
-                              >
-                                {productProperties
-                                  .filter((p) => selected.includes(p.id))
-                                  .map((p) => (
-                                    <Chip key={p.id} label={p.label} />
-                                  ))}
-                              </Box>
-                            )}
+
+                  {listProductProperties.length === 0 ? (
+                    <Grid size={{ xs: 12 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No properties available.
+                      </Typography>
+                    </Grid>
+                  ) : (
+                    listProductProperties.map((group) => {
+                      const groupValueIds = group.values.map((v) => v.id)
+
+                      return (
+                        <Grid key={group.id} size={{ xs: 12, md: 6 }}>
+                          <FormControl
+                            fullWidth
+                            error={!!errors.productVariants?.[index]?.valueIds}
                           >
-                            {productProperties.map((prop) => (
-                              <MenuItem key={prop.id} value={prop.id}>
-                                <Checkbox
-                                  checked={field.value.includes(prop.id)}
-                                />
-                                <ListItemText primary={prop.label} />
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        )}
-                      />
-                      {errors.productVariants?.[index]?.valueIds && (
-                        <FormHelperText>
-                          {errors.productVariants?.[index]?.valueIds?.message}
-                        </FormHelperText>
-                      )}
-                    </FormControl>
-                  </Grid>
+                            <InputLabel>{group.label}</InputLabel>
+
+                            <Controller
+                              name={`productVariants.${index}.valueIds`}
+                              control={control}
+                              defaultValue={[]}
+                              render={({ field }) => {
+                                const selectedAll: string[] = field.value || []
+                                const selectedInGroup = selectedAll.filter(
+                                  (id) => groupValueIds.includes(id)
+                                )
+
+                                const handleChange = (
+                                  event: SelectChangeEvent<string[]>
+                                ) => {
+                                  const newGroupSelected = event.target
+                                    .value as string[]
+                                  const others = selectedAll.filter(
+                                    (id) => !groupValueIds.includes(id)
+                                  )
+                                  field.onChange([
+                                    ...others,
+                                    ...newGroupSelected,
+                                  ])
+                                }
+
+                                return (
+                                  <Select
+                                    multiple
+                                    label={group.label}
+                                    value={selectedInGroup}
+                                    onChange={handleChange}
+                                    disabled={isLoadingListProperties}
+                                    input={
+                                      <OutlinedInput label={group.label} />
+                                    }
+                                    renderValue={(selectedIds) => (
+                                      <Box
+                                        sx={{
+                                          display: 'flex',
+                                          flexWrap: 'wrap',
+                                          gap: 0.5,
+                                        }}
+                                      >
+                                        {group.values
+                                          .filter((v) =>
+                                            (selectedIds as string[]).includes(
+                                              v.id
+                                            )
+                                          )
+                                          .map((v) => (
+                                            <Chip key={v.id} label={v.label} />
+                                          ))}
+                                      </Box>
+                                    )}
+                                  >
+                                    {group.values.map((v) => (
+                                      <MenuItem key={v.id} value={v.id}>
+                                        <Checkbox
+                                          checked={selectedInGroup.includes(
+                                            v.id
+                                          )}
+                                        />
+                                        <ListItemText
+                                          primary={v.label}
+                                          secondary={v.description}
+                                        />
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                )
+                              }}
+                            />
+
+                            {errors.productVariants?.[index]?.valueIds && (
+                              <FormHelperText>
+                                {
+                                  errors.productVariants?.[index]?.valueIds
+                                    ?.message
+                                }
+                              </FormHelperText>
+                            )}
+                          </FormControl>
+                        </Grid>
+                      )
+                    })
+                  )}
+
                   <Grid size={{ xs: 12 }}>
                     <Controller
                       name={`productVariants.${index}.isActive`}

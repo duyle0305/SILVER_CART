@@ -26,34 +26,51 @@ import { useParams } from 'react-router-dom'
 import OrderStatusSteps, {
   type TOrderStatus,
 } from './components/OrderStatusStep'
-import { useChangeStatusOrder } from './hooks/useChangeStatusOrder'
+import { useFakeGHNChangeStatus } from './hooks/useFakeGHNChangeStatus'
+import { useCreateOrderInGHN } from './hooks/useCreateOrderInGHN'
 
 const currency = (v: number) => v.toLocaleString('vi-VN') + ' VND'
 
 const statusChip = (status: string) => {
   let color: 'success' | 'warning' | 'info' | 'error' | 'default' = 'default'
-
+  let label = ''
   switch (status) {
     case 'Paid':
       color = 'success'
+      label = 'Paid'
       break
     case 'PendingChecked':
+      color = 'warning'
+      label = 'Pending Checked'
+      break
     case 'PendingConfirm':
+      color = 'warning'
+      label = 'Pending Confirm'
+      break
     case 'PendingPickup':
+      color = 'warning'
+      label = 'Pending Pickup'
+      break
     case 'PendingDelivery':
       color = 'warning'
+      label = 'Pending Delivery'
       break
     case 'Shipping':
       color = 'info'
+      label = 'Shipping'
+      break
+    case 'Delivered':
+      color = 'success'
+      label = 'Delivered'
       break
     case 'Canceled':
       color = 'error'
+      label = 'Canceled'
       break
     default:
       color = 'default'
   }
-
-  return <Chip size="small" label={status} color={color} />
+  return <Chip size="small" label={label} color={color} />
 }
 
 const renderStatusAction = (
@@ -85,13 +102,23 @@ const renderStatusAction = (
           Confirm
         </Button>
       )
-
+    case 'PendingConfirm':
     case 'PendingPickup':
     case 'PendingDelivery':
     case 'Shipping':
-    case 'Canceled':
-      return null
+      return (
+        <Button
+          variant="contained"
+          color="info"
+          onClick={onAction}
+          loading={isLoading}
+        >
+          GHN change status
+        </Button>
+      )
 
+    case 'Delivered':
+    case 'Canceled':
     default:
       return null
   }
@@ -102,7 +129,9 @@ export default function OrderDetailPage() {
   const { showNotification } = useNotification()
 
   const { data: order, isLoading, error } = useOrderDetail(id!)
-  const { mutateAsync: changeStatus, isPending } = useChangeStatusOrder()
+  const { mutateAsync: changeStatus, isPending } = useCreateOrderInGHN()
+  const { mutateAsync: fakeGHNChangeStatus, isPending: isFakePending } =
+    useFakeGHNChangeStatus()
 
   useEffect(() => {
     if (error) {
@@ -156,9 +185,31 @@ export default function OrderDetailPage() {
         </Stack>
         <Stack>
           {order &&
-            renderStatusAction(order.orderStatus, isPending, async () => {
-              await changeStatus({ orderId: id! })
-            })}
+            renderStatusAction(
+              order.orderStatus,
+              [
+                'PendingConfirm',
+                'PendingPickup',
+                'PendingDelivery',
+                'Shipping',
+              ].includes(order.orderStatus)
+                ? isFakePending
+                : isPending,
+              async () => {
+                if (
+                  [
+                    'PendingConfirm',
+                    'PendingPickup',
+                    'PendingDelivery',
+                    'Shipping',
+                  ].includes(order.orderStatus)
+                ) {
+                  await fakeGHNChangeStatus({ orderId: id! })
+                } else {
+                  await changeStatus({ orderId: id! })
+                }
+              }
+            )}
         </Stack>
       </Stack>
 

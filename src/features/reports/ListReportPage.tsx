@@ -7,11 +7,14 @@ import { useDebounce } from 'ahooks'
 import { useReports } from './hooks/useReports'
 import { SortType } from '@/constants'
 import { useNotification } from '@/hooks/useNotification'
-import { Box, Skeleton, TableCell } from '@mui/material'
+import { Box, IconButton, Skeleton, TableCell } from '@mui/material'
 import { BaseTable } from '@/components/common/BaseTable'
 import ReportToolbar from './components/ReportToolbar'
 import { StyledTableRow } from '../users/components/styles/UserTable.styles'
 import { useUserDetail } from '../users/hooks/useUserDetail'
+import BorderColorIcon from '@mui/icons-material/BorderColor'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { authorizationAction, Role } from '../authentication/constants'
 
 const reportHeadCells: readonly HeadCell<Report>[] = [
   { id: 'title', label: 'Title' },
@@ -22,6 +25,9 @@ const reportHeadCells: readonly HeadCell<Report>[] = [
 export default function ListReportPage() {
   const navigate = useNavigate()
   const { showNotification } = useNotification()
+  const { user } = useAuthContext()
+  const allowWriteReport =
+    user?.role && authorizationAction.allowWriteReport.includes(user.role)
   const table = useTable<Report>({ initialOrderBy: 'title' })
   const [keyword, setKeyword] = useState('')
   const debouncedKeyword = useDebounce(keyword, { wait: 500 })
@@ -31,6 +37,7 @@ export default function ListReportPage() {
     pageSize: table.rowsPerPage,
     sortAscending: table.order === SortType.Ascending,
     sortBy: table.orderBy as string,
+    consultantId: user?.role === Role.CONSULTANT ? user.userId : undefined,
   })
 
   const reports = useMemo(() => data?.items || [], [data?.items])
@@ -69,6 +76,20 @@ export default function ListReportPage() {
             consultantData?.fullName
           )}
         </TableCell>
+        {allowWriteReport && (
+          <TableCell>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/reports/edit/${report.id}`)
+              }}
+            >
+              <BorderColorIcon fontSize="small" />
+            </IconButton>
+          </TableCell>
+        )}
       </StyledTableRow>
     )
   }
@@ -90,9 +111,9 @@ export default function ListReportPage() {
         toolbar={
           <ReportToolbar keyword={keyword} onKeywordChange={setKeyword} />
         }
-        allowModify={false}
         showCheckbox={false}
         renderRow={renderReportRow}
+        allowModify={allowWriteReport}
       />
     </Box>
   )

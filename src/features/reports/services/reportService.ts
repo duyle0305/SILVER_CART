@@ -41,3 +41,16 @@ export const getReportDetails = async (
   })
   return response
 }
+
+export const getReportByUserId = async (
+  userId: string,
+  signal: AbortSignal
+): Promise<Report[]> => {
+  const response = await apiClient.get<Report[]>(`/Report/GetByUserId/`, {
+    params: {
+      userId,
+    },
+    signal,
+  })
+  return response
+}
