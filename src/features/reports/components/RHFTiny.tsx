@@ -1,3 +1,4 @@
+import { config } from '@/config'
 import { FormControl, FormHelperText } from '@mui/material'
 import { Editor } from '@tinymce/tinymce-react'
 import { Controller, useFormContext } from 'react-hook-form'
@@ -11,7 +12,7 @@ export function RHFTiny({ name }: { name: string }) {
       render={({ field, fieldState }) => (
         <FormControl fullWidth error={!!fieldState.error}>
           <Editor
-            apiKey="xzlg8gzxxjdykegtbp3ejlfy3zv50kfvo5yk4ezi4oe7dm46"
+            apiKey={config.tinyMCEApiKey}
             value={field.value ?? ''}
             init={{
               menubar: false,

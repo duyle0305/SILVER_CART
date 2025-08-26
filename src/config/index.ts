@@ -8,4 +8,5 @@ export const config = {
   firebaseAppId: import.meta.env.SC_FIREBASE_APP_ID,
   agoraAppId: import.meta.env.SC_AGORA_APP_ID,
   agoraToken: import.meta.env.SC_AGORA_TOKEN,
+  tinyMCEApiKey: import.meta.env.SC_TINY_MCE_API_KEY,
 }
