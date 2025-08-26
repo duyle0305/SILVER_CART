@@ -15,7 +15,7 @@ import ChatIcon from '@mui/icons-material/Forum'
 import InventoryIcon from '@mui/icons-material/Inventory'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PeopleIcon from '@mui/icons-material/People'
-import SettingsIcon from '@mui/icons-material/Settings'
+// import SettingsIcon from '@mui/icons-material/Settings'
 import StorefrontIcon from '@mui/icons-material/Storefront'
 import RateReviewIcon from '@mui/icons-material/RateReview'
 import AssessmentIcon from '@mui/icons-material/Assessment'
@@ -129,11 +129,11 @@ const Sidebar = () => {
               icon: <RateReviewIcon />,
               path: '/feedbacks',
             },
-            {
-              text: 'Reports',
-              icon: <AssessmentIcon />,
-              path: '/reports',
-            },
+            // {
+            //   text: 'Reports',
+            //   icon: <AssessmentIcon />,
+            //   path: '/reports',
+            // },
           ],
         },
         {
@@ -146,7 +146,7 @@ const Sidebar = () => {
     items.push({
       name: 'System',
       items: [
-        { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+        // { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
         {
           text: 'Log out',
           icon: <LogoutIcon />,
@@ -180,7 +180,7 @@ const Sidebar = () => {
         {categories.map((category) => (
           <div key={category.name}>
             <StyledListSubheader>{category.name}</StyledListSubheader>
-            {category.items.map((item) => (
+            {category.items.map((item: any) => (
               <ListItem key={item.text} disablePadding>
                 {item.path ? (
                   <StyledNavItem component={NavLink} to={item.path}>

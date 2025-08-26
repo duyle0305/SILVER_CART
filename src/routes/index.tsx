@@ -375,7 +375,7 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <AuthGuard roles={[Role.ADMIN, Role.STAFF, Role.CONSULTANT]}>
+              <AuthGuard roles={[Role.ADMIN, Role.CONSULTANT]}>
                 <ListReportPage />
               </AuthGuard>
             ),
@@ -405,7 +405,7 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <AuthGuard roles={[Role.ADMIN, Role.STAFF, Role.CONSULTANT]}>
+              <AuthGuard roles={[Role.ADMIN, Role.CONSULTANT]}>
                 <ReportDetailsPage />
               </AuthGuard>
             ),
