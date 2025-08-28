@@ -19,9 +19,11 @@ import { useNotification } from '@/hooks/useNotification'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useUpdatePromotion } from './hooks/useUpdatePromotion'
 import { usePromotionDetail } from './hooks/usePromotionDetail'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function CreateUpdatePromotionPage() {
+  const [focusStart, setFocusStart] = useState(false)
+  const [focusEnd, setFocusEnd] = useState(false)
   const navigate = useNavigate()
   const { showNotification } = useNotification()
   const { id } = useParams()
@@ -37,6 +39,7 @@ export default function CreateUpdatePromotionPage() {
     formState: { errors },
     reset,
     control,
+    watch,
   } = useForm<CreatePromotionFormInput>({
     resolver: zodResolver(createPromotionSchema),
     defaultValues: {
@@ -158,6 +161,9 @@ export default function CreateUpdatePromotionPage() {
             fullWidth
             error={!!errors.startAt}
             helperText={errors.startAt?.message}
+            InputLabelProps={{
+              shrink: true,
+            }}
           />
         </Grid>
 
@@ -169,6 +175,9 @@ export default function CreateUpdatePromotionPage() {
             fullWidth
             error={!!errors.endAt}
             helperText={errors.endAt?.message}
+            InputLabelProps={{
+              shrink: true,
+            }}
           />
         </Grid>
 
