@@ -1,29 +1,27 @@
+import { useNotification } from '@/hooks/useNotification'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  Paper,
-  Typography,
   Button,
+  Grid,
+  Paper,
   Stack,
   TextField,
-  Grid,
+  Typography,
 } from '@mui/material'
 import dayjs from 'dayjs'
+import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useCreatePromotion } from './hooks/useCreatePromotion'
+import { usePromotionDetail } from './hooks/usePromotionDetail'
+import { useUpdatePromotion } from './hooks/useUpdatePromotion'
 import {
   createPromotionSchema,
   type CreatePromotionFormInput,
   type CreatePromotionFormOutput,
 } from './schemas'
-import { useCreatePromotion } from './hooks/useCreatePromotion'
-import { useNotification } from '@/hooks/useNotification'
-import { useNavigate, useParams } from 'react-router-dom'
-import { useUpdatePromotion } from './hooks/useUpdatePromotion'
-import { usePromotionDetail } from './hooks/usePromotionDetail'
-import { useEffect, useState } from 'react'
 
 export default function CreateUpdatePromotionPage() {
-  const [focusStart, setFocusStart] = useState(false)
-  const [focusEnd, setFocusEnd] = useState(false)
   const navigate = useNavigate()
   const { showNotification } = useNotification()
   const { id } = useParams()
@@ -39,7 +37,6 @@ export default function CreateUpdatePromotionPage() {
     formState: { errors },
     reset,
     control,
-    watch,
   } = useForm<CreatePromotionFormInput>({
     resolver: zodResolver(createPromotionSchema),
     defaultValues: {

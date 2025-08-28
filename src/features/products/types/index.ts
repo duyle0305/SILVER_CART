@@ -69,10 +69,10 @@ export interface CreateProductPayload {
   brand: string
   description: string
   videoPath: string
-  weight: number | null
+  weight: number
   height: number | null
   length: number | null
-  width: number
+  width: number | null
   manufactureDate: string
   expirationDate: string
   valueCategoryIds: string[]
