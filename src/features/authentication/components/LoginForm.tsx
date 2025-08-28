@@ -5,7 +5,7 @@ import {
 } from '@/features/authentication/schemas'
 import {
   FooterContainer,
-  ForgotPasswordLink,
+  // ForgotPasswordLink,
   FormContainer,
   LoginButton,
   StyledForm,
@@ -114,9 +114,9 @@ const LoginForm = () => {
           {isPending ? 'Logging in...' : 'Log In'}
         </LoginButton>
 
-        <ForgotPasswordLink underline="hover">
+        {/* <ForgotPasswordLink underline="hover">
           I forgot my password
-        </ForgotPasswordLink>
+        </ForgotPasswordLink> */}
 
         <Divider sx={{ m: 4 }} />
         <FooterContainer>

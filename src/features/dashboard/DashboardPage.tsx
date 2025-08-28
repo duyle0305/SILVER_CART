@@ -6,7 +6,7 @@ import { TimeScope } from '@/features/dashboard/constants'
 import { useCurrentStatistic } from '@/features/dashboard/hooks/useCurrentStatistic'
 import { useStatisticsOrders } from '@/features/dashboard/hooks/useStatisticOrders'
 import { useStatisticsRevenues } from '@/features/dashboard/hooks/useStatisticRevenues'
-import { useStatisticsCustomers } from '@/features/dashboard/hooks/useStatisticsCustomers'
+// import { useStatisticsCustomers } from '@/features/dashboard/hooks/useStatisticsCustomers'
 import { useStatisticsProducts } from '@/features/dashboard/hooks/useStatisticsProducts'
 import { useTopNCustomers } from '@/features/dashboard/hooks/useTopNCustomers'
 import { useTopNProducts } from '@/features/dashboard/hooks/useTopNProduct'
@@ -46,6 +46,8 @@ const metrics = [
 const formatTimePeriod = (timePeriod: string, timeScope: TimeScope) => {
   if (timeScope === TimeScope.YEAR) {
     return dayjs(timePeriod).format('MMM')
+  } else if (timeScope === TimeScope.MONTH) {
+    return dayjs(timePeriod).format('DD')
   }
   return dayjs(timePeriod).format('DD-MM')
 }
@@ -67,8 +69,8 @@ const DashboardPage = () => {
 
   const { data: productsData = [], isLoading: isLoadingProducts } =
     useStatisticsProducts(timeFrames.products)
-  const { data: customerData = [], isLoading: isLoadingCustomers } =
-    useStatisticsCustomers(timeFrames.customers)
+  // const { data: customerData = [], isLoading: isLoadingCustomers } =
+  //   useStatisticsCustomers(timeFrames.customers)
   const { data: ordersData = [], isLoading: isLoadingOrders } =
     useStatisticsOrders(timeFrames.orders)
   const { data: revenuesData = [], isLoading: isLoadingRevenues } =
@@ -85,10 +87,10 @@ const DashboardPage = () => {
     value: product.count,
   }))
 
-  const customersChartData = customerData.map((customer) => ({
-    name: formatTimePeriod(customer.timePeriod, timeFrames.customers),
-    value: customer.count,
-  }))
+  // const customersChartData = customerData.map((customer) => ({
+  //   name: formatTimePeriod(customer.timePeriod, timeFrames.customers),
+  //   value: customer.count,
+  // }))
 
   const revenuesChartData = revenuesData.map((revenue) => ({
     name: formatTimePeriod(revenue.timePeriod, timeFrames.revenues),
@@ -164,7 +166,7 @@ const DashboardPage = () => {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12 }}>
+        {/* <Grid size={{ xs: 12 }}>
           <StatisticChart
             title="Customers Statistics"
             data={customersChartData}
@@ -174,7 +176,7 @@ const DashboardPage = () => {
               onChangeTimeFrame('customers', value)
             }}
           />
-        </Grid>
+        </Grid> */}
         <Grid size={{ xs: 12 }}>
           <StatisticChart
             title="Orders Statistics"

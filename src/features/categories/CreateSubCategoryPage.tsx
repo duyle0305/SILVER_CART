@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useNotification } from '@/hooks/useNotification'
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
@@ -26,6 +26,7 @@ const CreateSubCategoryPage = () => {
   const { showNotification } = useNotification()
   const { showLoader, hideLoader } = useLoader()
   const { mutateAsync: createSubCategory, isPending } = useCreateSubCategory()
+  const { id = '' } = useParams()
 
   const {
     register,
@@ -35,8 +36,6 @@ const CreateSubCategoryPage = () => {
   } = useForm<CreateSubCategoryFormInputs>({
     resolver: zodResolver(createSubCategorySchema),
     defaultValues: {
-      label: '',
-      note: '',
       values: [{ code: '', label: '', description: '' }],
     },
   })
@@ -47,19 +46,24 @@ const CreateSubCategoryPage = () => {
   })
 
   const onSubmit = async (data: CreateSubCategoryFormInputs) => {
+    if (!id) {
+      showNotification('Missing sub-category id in URL.', 'error')
+      return
+    }
+
     showLoader()
     try {
       await createSubCategory({
-        label: data.label,
-        note: data.note || '',
-        values: data.values.map((item) => ({
-          ...item,
+        id,
+        createCategoryValueDtos: data.values.map((item) => ({
+          code: item.code,
+          label: item.label,
           description: item.description || '',
         })),
       })
 
-      showNotification('Sub-category created successfully!', 'success')
-      navigate('/categories')
+      showNotification('Sub-category values created successfully!', 'success')
+      navigate(`/categories/sub-category/${id}`)
     } catch (error) {
       let errorMessage = 'An unexpected error occurred.'
       if (isAxiosError(error) && error.response) {
@@ -77,23 +81,8 @@ const CreateSubCategoryPage = () => {
   return (
     <Paper component="form" sx={{ p: 3 }} onSubmit={handleSubmit(onSubmit)}>
       <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
-        Create Sub-Category
+        Create Sub-Category Values
       </Typography>
-
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextField
-            {...register('label')}
-            label="Sub-Category Label"
-            fullWidth
-            error={!!errors.label}
-            helperText={errors.label?.message}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextField {...register('note')} label="Note" fullWidth />
-        </Grid>
-      </Grid>
 
       <Typography variant="h6" gutterBottom>
         Values

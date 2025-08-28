@@ -46,7 +46,7 @@ export const getListCategoryNoValue = async (
 export const createNewSubCategory = async (
   data: SubCategoryCreateBodyParam
 ): Promise<void> => {
-  await apiClient.post('Category/CreateNewSubCategory', data)
+  await apiClient.post('Category/CreateListSubCategory', data)
 }
 
 export const createValueOfCategoryRoot = async (

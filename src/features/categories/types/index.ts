@@ -28,12 +28,12 @@ export interface LeafNodesWithPaths {
 }
 
 export interface SubCategoryCreateBodyParam {
-  label: string
-  note: string
-  values: {
+  id: string
+  createCategoryValueDtos: {
     code: string
-    label: string
+
     description: string
+    label: string
   }[]
 }
 

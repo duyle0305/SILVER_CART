@@ -23,8 +23,6 @@ const subCategoryValueSchema = z.object({
 })
 
 export const createSubCategorySchema = z.object({
-  label: z.string().min(1, 'Sub-category label is required'),
-  note: z.string().optional(),
   values: z
     .array(subCategoryValueSchema)
     .min(1, 'At least one value is required'),

@@ -25,6 +25,16 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 
+interface SidebarCategory {
+  name: string
+  items: {
+    text: string
+    icon: React.ReactNode
+    path?: string
+    action?: () => void
+  }[]
+}
+
 const Sidebar = () => {
   const { openLogoutConfirmationDialog } = useLogoutConfirmation()
   const { user } = useAuthContext()
@@ -39,7 +49,7 @@ const Sidebar = () => {
     []
   )
 
-  const categories = useMemo(() => {
+  const categories: SidebarCategory[] = useMemo(() => {
     if (!userRole) return []
     const items = []
 

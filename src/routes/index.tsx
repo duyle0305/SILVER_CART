@@ -229,23 +229,28 @@ export const router = createBrowserRouter([
           },
           {
             path: 'sub-category/:id',
-            element: <SubCategoryDetailPage />,
-            handle: {
-              title: 'Sub Category Detail',
-            },
+            children: [
+              {
+                index: true,
+                element: <SubCategoryDetailPage />,
+                handle: {
+                  title: 'Sub Category Detail',
+                },
+              },
+              {
+                path: 'add',
+                element: <CreateSubCategoryPage />,
+                handle: {
+                  title: 'Create Sub-Category',
+                },
+              },
+            ],
           },
           {
             path: 'add-root',
             element: <CreateRootCategoryPage />,
             handle: {
               title: 'Create Root Category',
-            },
-          },
-          {
-            path: 'add-sub',
-            element: <CreateSubCategoryPage />,
-            handle: {
-              title: 'Create Sub-Category',
             },
           },
         ],
@@ -375,7 +380,7 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <AuthGuard roles={[Role.ADMIN, Role.CONSULTANT]}>
+              <AuthGuard roles={[Role.ADMIN, Role.STAFF, Role.CONSULTANT]}>
                 <ListReportPage />
               </AuthGuard>
             ),
@@ -405,7 +410,7 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <AuthGuard roles={[Role.ADMIN, Role.CONSULTANT]}>
+              <AuthGuard roles={[Role.ADMIN, Role.STAFF, Role.CONSULTANT]}>
                 <ReportDetailsPage />
               </AuthGuard>
             ),

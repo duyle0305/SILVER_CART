@@ -60,7 +60,7 @@ export default function SubCategoryDetailPage() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/categories/add-sub')}
+          onClick={() => navigate('add')}
         >
           Add sub-category
         </Button>

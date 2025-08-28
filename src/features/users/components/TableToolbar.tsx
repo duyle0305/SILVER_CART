@@ -74,7 +74,7 @@ const TableToolbar = ({
         )}
       </Stack>
       <StyledToolbar>
-        <Stack direction="row" spacing={2} width="25%">
+        <Stack direction="row" spacing={2} width="30%">
           <TextField
             variant="outlined"
             size="small"

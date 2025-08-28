@@ -17,9 +17,9 @@ export const createProductInputSchema = z.object({
   description: z.string().optional(),
   videoFile: z.instanceof(File).optional(),
   weight: z.string().min(1, 'Weight is required'),
-  height: z.string().min(1, 'Height is required'),
-  length: z.string().min(1, 'Length is required'),
-  width: z.string().min(1, 'Width is required'),
+  height: z.string().optional(),
+  length: z.string().optional(),
+  width: z.string().optional(),
   manufactureDate: z.any().refine((val) => val, {
     message: 'Manufacture date is required',
   }),
@@ -38,9 +38,9 @@ export const createProductOutputSchema = createProductInputSchema.transform(
   (data) => ({
     ...data,
     weight: parseFloat(data.weight),
-    height: parseFloat(data.height),
-    length: parseFloat(data.length),
-    width: parseFloat(data.width),
+    height: data.height ? parseFloat(data.height) : null,
+    length: data.length ? parseFloat(data.length) : null,
+    width: data.width ? parseFloat(data.width) : null,
     productVariants: data.productVariants.map((variant) => ({
       ...variant,
       price: parseFloat(variant.price),
