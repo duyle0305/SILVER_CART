@@ -15,7 +15,6 @@ import ChatIcon from '@mui/icons-material/Forum'
 import InventoryIcon from '@mui/icons-material/Inventory'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PeopleIcon from '@mui/icons-material/People'
-// import SettingsIcon from '@mui/icons-material/Settings'
 import StorefrontIcon from '@mui/icons-material/Storefront'
 import RateReviewIcon from '@mui/icons-material/RateReview'
 import AssessmentIcon from '@mui/icons-material/Assessment'
@@ -80,6 +79,11 @@ const Sidebar = () => {
             icon: <LocalOfferIcon />,
             path: '/promotions',
           },
+          {
+            text: 'Orders',
+            icon: <LocalShippingIcon />,
+            path: '/orders',
+          },
         ],
       })
     }
@@ -105,14 +109,7 @@ const Sidebar = () => {
         },
         {
           name: 'General',
-          items: [
-            { text: 'Chat Box', icon: <ChatIcon />, path: '/chat' },
-            // {
-            //   text: 'Video Call',
-            //   icon: <VideoCallIcon />,
-            //   path: '/video-call',
-            // },
-          ],
+          items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
         }
       )
     }
@@ -139,11 +136,11 @@ const Sidebar = () => {
               icon: <RateReviewIcon />,
               path: '/feedbacks',
             },
-            // {
-            //   text: 'Reports',
-            //   icon: <AssessmentIcon />,
-            //   path: '/reports',
-            // },
+            {
+              text: 'Reports',
+              icon: <AssessmentIcon />,
+              path: '/reports',
+            },
           ],
         },
         {
@@ -156,7 +153,6 @@ const Sidebar = () => {
     items.push({
       name: 'System',
       items: [
-        // { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
         {
           text: 'Log out',
           icon: <LogoutIcon />,
@@ -190,7 +186,7 @@ const Sidebar = () => {
         {categories.map((category) => (
           <div key={category.name}>
             <StyledListSubheader>{category.name}</StyledListSubheader>
-            {category.items.map((item: any) => (
+            {category.items.map((item) => (
               <ListItem key={item.text} disablePadding>
                 {item.path ? (
                   <StyledNavItem component={NavLink} to={item.path}>

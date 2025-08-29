@@ -28,6 +28,8 @@ import OrderStatusSteps, {
 } from './components/OrderStatusStep'
 import { useFakeGHNChangeStatus } from './hooks/useFakeGHNChangeStatus'
 import { useCreateOrderInGHN } from './hooks/useCreateOrderInGHN'
+import { authorizationAction } from '../authentication/constants'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 const currency = (v: number) => v.toLocaleString('vi-VN') + ' VND'
 
@@ -66,10 +68,6 @@ const statusChip = (status: string) => {
     case 'Canceled':
       color = 'error'
       label = 'Canceled'
-      break
-    case 'Fail':
-      color = 'error'
-      label = 'Failed'
       break
     default:
       color = 'default'
@@ -131,6 +129,12 @@ const renderStatusAction = (
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { showNotification } = useNotification()
+  const { user } = useAuthContext()
+  const allowModifyStatusOrder =
+    (user?.role &&
+      authorizationAction.allowModifyStatusOrder.includes(user.role)) ||
+    (user?.role &&
+      authorizationAction.allowModifyStatusOrder.includes(user.role))
 
   const { data: order, isLoading, error } = useOrderDetail(id!)
   const { mutateAsync: changeStatus, isPending } = useCreateOrderInGHN()
@@ -189,6 +193,7 @@ export default function OrderDetailPage() {
         </Stack>
         <Stack>
           {order &&
+            allowModifyStatusOrder &&
             renderStatusAction(
               order.orderStatus,
               [
