@@ -11,7 +11,7 @@ export const authorizationAction = {
   allowCreateUser: [Role.ADMIN],
   allowViewUser: [Role.ADMIN, Role.CONSULTANT, Role.STAFF],
   allowCreateProducts: [Role.ADMIN],
-  allowUpdateProducts: [Role.ADMIN],
+  allowUpdateProducts: [Role.ADMIN, Role.STAFF],
   allowViewProducts: [Role.ADMIN, Role.CONSULTANT, Role.STAFF],
   allowCRUDCategories: [Role.ADMIN],
   allowChat: [Role.CONSULTANT, Role.STAFF],
@@ -24,4 +24,5 @@ export const authorizationAction = {
   allowWritePromotion: [Role.ADMIN],
   allowViewOrders: [Role.STAFF],
   allowWriteReport: [Role.CONSULTANT],
+  allowViewReport: [Role.ADMIN, Role.CONSULTANT, Role.STAFF],
 }

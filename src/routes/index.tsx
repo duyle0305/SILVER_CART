@@ -150,14 +150,31 @@ export const router = createBrowserRouter([
           },
           {
             path: ':id',
-            element: (
-              <AuthGuard roles={authorizationAction.allowViewUser}>
-                <UserDetailPage />
-              </AuthGuard>
-            ),
+
             handle: {
               title: 'User Information',
             },
+            children: [
+              {
+                index: true,
+                element: (
+                  <AuthGuard roles={authorizationAction.allowViewUser}>
+                    <UserDetailPage />
+                  </AuthGuard>
+                ),
+              },
+              {
+                path: 'consultation-history/:id',
+                element: (
+                  <AuthGuard roles={authorizationAction.allowViewReport}>
+                    <ReportDetailsPage />
+                  </AuthGuard>
+                ),
+                handle: {
+                  title: 'Consultation History Details',
+                },
+              },
+            ],
           },
         ],
       },

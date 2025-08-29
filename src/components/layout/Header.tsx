@@ -41,6 +41,8 @@ const Header = () => {
   const title =
     crumbs.length > 0 ? crumbs[crumbs.length - 1].title : 'Dashboard'
 
+  console.log('crumbs', crumbs)
+
   return (
     <StyledAppBar position="static">
       <Toolbar>

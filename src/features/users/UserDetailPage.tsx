@@ -1,13 +1,20 @@
+import { useAuthContext } from '@/contexts/AuthContext'
+import { useLoader } from '@/hooks/useLoader'
+import { useNotification } from '@/hooks/useNotification'
+import BlockIcon from '@mui/icons-material/Block'
 import CakeIcon from '@mui/icons-material/Cake'
+import ContactPhoneIcon from '@mui/icons-material/ContactPhone'
 import EmailIcon from '@mui/icons-material/Email'
+import EmergencyIcon from '@mui/icons-material/Emergency'
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom'
+import LockOpenIcon from '@mui/icons-material/LockOpen'
 import LoyaltyIcon from '@mui/icons-material/Loyalty'
 import PaymentIcon from '@mui/icons-material/Payment'
 import PersonIcon from '@mui/icons-material/Person'
 import PhoneIcon from '@mui/icons-material/Phone'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
-import EmergencyIcon from '@mui/icons-material/Emergency'
-import BlockIcon from '@mui/icons-material/Block'
-import LockOpenIcon from '@mui/icons-material/LockOpen'
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
+
 import {
   Avatar,
   Box,
@@ -32,19 +39,14 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import dayjs from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useUserDetail } from './hooks/useUserDetail'
-import { useLoader } from '@/hooks/useLoader'
-import { useNotification } from '@/hooks/useNotification'
-import dayjs from 'dayjs'
-import { useBanOrUnbanUser } from './hooks/useBanOrUnbanUser'
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
-import ContactPhoneIcon from '@mui/icons-material/ContactPhone'
-import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom'
+import { authorizationAction } from '../authentication/constants'
+
 import { useReportByUserId } from '../reports/hooks/useReportByUserId'
-import { useAuthContext } from '@/contexts/AuthContext'
-import { authorizationAction, Role } from '../authentication/constants'
+import { useBanOrUnbanUser } from './hooks/useBanOrUnbanUser'
+import { useUserDetail } from './hooks/useUserDetail'
 
 const genderLabel = (gender?: number) =>
   gender === 1
@@ -173,8 +175,8 @@ const UserDetailPage = () => {
     }
   }
 
-  const openReportDetail = (reportId: string) => {
-    navigate(`/reports/${reportId}`)
+  const openConsultationHistoryDetail = (reportId: string) => {
+    navigate(`consultation-history/${reportId}`)
   }
 
   return (
@@ -533,12 +535,7 @@ const UserDetailPage = () => {
                       key={report.id}
                       hover
                       onClick={() => {
-                        if (
-                          user?.role === Role.ADMIN ||
-                          user?.role === Role.CONSULTANT
-                        ) {
-                          openReportDetail(report.id)
-                        }
+                        openConsultationHistoryDetail(report.id)
                       }}
                     >
                       <TableCell sx={{ maxWidth: 320 }}>

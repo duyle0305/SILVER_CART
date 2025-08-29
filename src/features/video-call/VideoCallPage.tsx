@@ -189,7 +189,31 @@ export default function VideoCallPage() {
       const qs = callerUserId
         ? `?userId=${encodeURIComponent(callerUserId)}`
         : ''
-      navigate(`/reports/add${qs}`, { replace: true })
+      const reportUrl = `/reports/add${qs}`
+
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.postMessage(
+            {
+              type: 'VCALL_ENDED',
+              userId: callerUserId,
+              connectionId,
+            },
+            window.location.origin
+          )
+        } catch {
+          navigate(reportUrl, { replace: true })
+          return
+        }
+
+        try {
+          window.close()
+        } catch {
+          navigate(reportUrl, { replace: true })
+        }
+      } else {
+        navigate(reportUrl, { replace: true })
+      }
     }
   }
 
