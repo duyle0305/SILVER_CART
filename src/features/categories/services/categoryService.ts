@@ -12,9 +12,12 @@ import { apiClient } from '@/lib/axios'
 export const getCategories = async (
   signal: AbortSignal
 ): Promise<Category[]> => {
-  const response = await apiClient.get<Category[]>('Category/GetListCategory', {
-    signal,
-  })
+  const response = await apiClient.get<Category[]>(
+    'Category/GetRootListValueCategory',
+    {
+      signal,
+    }
+  )
   return response
 }
 

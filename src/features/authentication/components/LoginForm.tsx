@@ -42,6 +42,7 @@ const LoginForm = () => {
     defaultValues: {
       userName: '',
       password: '',
+      deviceId: '',
       stayLoggedIn: false,
     },
   })
@@ -50,6 +51,7 @@ const LoginForm = () => {
     const payload = {
       userName: data.userName,
       password: data.password,
+      deviceId: data.deviceId,
     }
 
     loginMutation(payload, {

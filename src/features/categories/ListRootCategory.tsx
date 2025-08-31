@@ -37,12 +37,12 @@ export default function ListRootCategory() {
     <TableRow
       key={row.id}
       hover
-      onClick={() => handleRowClick(row.id)}
+      onClick={() => handleRowClick(row.childrenId)}
       sx={{ cursor: 'pointer' }}
     >
       <TableCell>{index + 1}</TableCell>
       <TableCell>{row.label}</TableCell>
-      <TableCell>{row.note}</TableCell>
+      <TableCell>{row.description}</TableCell>
     </TableRow>
   )
 

@@ -13,8 +13,9 @@ export interface RootCategory {
 export interface Category {
   id: string
   label: string
-  note: string
+  description: string
   type: number
+  childrenId: string
   values: SubCategory[]
 }
 
