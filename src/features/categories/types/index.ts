@@ -13,9 +13,8 @@ export interface RootCategory {
 export interface Category {
   id: string
   label: string
-  description: string
+  note: string
   type: number
-  childrenId: string
   values: SubCategory[]
 }
 
@@ -32,7 +31,6 @@ export interface SubCategoryCreateBodyParam {
   id: string
   createCategoryValueDtos: {
     code: string
-
     description: string
     label: string
   }[]

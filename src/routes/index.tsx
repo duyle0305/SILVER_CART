@@ -56,6 +56,9 @@ const ListProductPropertyPage = lazy(
 const CreateProductPropertyPage = lazy(
   () => import('@/features/product-property/CreateProductPropertyPage')
 )
+const EditProductPropertyPage = lazy(
+  () => import('@/features/product-property/EditProductPropertyPage')
+)
 
 // Video Call
 const VideoCallPage = lazy(() => import('@/features/video-call/VideoCallPage'))
@@ -94,6 +97,11 @@ const CreateUpdatePromotionPage = lazy(
 // Orders
 const OrderDetailPage = lazy(() => import('@/features/orders/OrderDetailPage'))
 const ListOrderPage = lazy(() => import('@/features/orders/ListOrderPage'))
+
+// Withdraw Request
+const ListWithDrawRequestPage = lazy(
+  () => import('@/features/withdraw-request/ListWithDrawRequestPage')
+)
 
 export const router = createBrowserRouter([
   {
@@ -150,7 +158,6 @@ export const router = createBrowserRouter([
           },
           {
             path: ':id',
-
             handle: {
               title: 'User Information',
             },
@@ -246,19 +253,26 @@ export const router = createBrowserRouter([
           },
           {
             path: 'sub-category/:id',
+            handle: {
+              title: 'Sub Category Detail',
+            },
             children: [
               {
                 index: true,
                 element: <SubCategoryDetailPage />,
-                handle: {
-                  title: 'Sub Category Detail',
-                },
               },
               {
                 path: 'add',
                 element: <CreateSubCategoryPage />,
                 handle: {
                   title: 'Create Sub-Category',
+                },
+              },
+              {
+                path: 'edit/:subId',
+                element: <CreateSubCategoryPage />,
+                handle: {
+                  title: 'Edit Sub-Category',
                 },
               },
             ],
@@ -268,6 +282,13 @@ export const router = createBrowserRouter([
             element: <CreateRootCategoryPage />,
             handle: {
               title: 'Create Root Category',
+            },
+          },
+          {
+            path: 'edit/:id',
+            element: <CreateRootCategoryPage />,
+            handle: {
+              title: 'Edit Root Category',
             },
           },
         ],
@@ -307,6 +328,13 @@ export const router = createBrowserRouter([
               title: 'Create Brand',
             },
           },
+          {
+            path: 'edit/:id',
+            element: <CreateBrandPage />,
+            handle: {
+              title: 'Edit Brand',
+            },
+          },
         ],
       },
       // Product Properties
@@ -332,19 +360,14 @@ export const router = createBrowserRouter([
               title: 'Create Product Property',
             },
           },
+          {
+            path: 'edit/:id',
+            element: <EditProductPropertyPage />,
+            handle: {
+              title: 'Create Product Property',
+            },
+          },
         ],
-      },
-      // Video Call
-      {
-        path: 'video-call/:connectionId',
-        element: (
-          <AuthGuard roles={authorizationAction.allowVideoCall}>
-            <VideoCallPage />
-          </AuthGuard>
-        ),
-        handle: {
-          title: 'Video Call',
-        },
       },
       // Feedbacks
       {
@@ -516,7 +539,30 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      {
+        path: 'withdraw-requests',
+        element: (
+          <AuthGuard roles={[Role.ADMIN]}>
+            <ListWithDrawRequestPage />
+          </AuthGuard>
+        ),
+        handle: {
+          title: 'Withdraw Requests',
+        },
+      },
     ],
+  },
+  // Video Call
+  {
+    path: 'video-call/:connectionId',
+    element: (
+      // <AuthGuard roles={authorizationAction.allowVideoCall}>
+      <VideoCallPage />
+      // </AuthGuard>
+    ),
+    handle: {
+      title: 'Video Call',
+    },
   },
   {
     path: '*',

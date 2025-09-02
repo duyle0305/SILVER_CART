@@ -1,7 +1,6 @@
 import {
   ActionButtonsContainer,
   AddVariantButton,
-  FormWrapper,
   ImagePreviewBox,
   RemoveButton,
   RemoveImageButton,
@@ -10,6 +9,7 @@ import {
   StyledAvatar,
   VariantPaper,
 } from '@/features/products/components/styles/CreateUpdateProductPage.styles'
+import { RHFTiny } from '@/features/reports/components/RHFTiny'
 import { useLoader } from '@/hooks/useLoader'
 import { useNotification } from '@/hooks/useNotification'
 import { uploadFile } from '@/services/fileUploadService'
@@ -43,6 +43,7 @@ import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import {
   Controller,
+  FormProvider,
   useFieldArray,
   useForm,
   type SubmitHandler,
@@ -88,14 +89,7 @@ const CreateUpdateProductPage = () => {
   const { data: productDetail, isLoading: isLoadingProductDetail } =
     useProductDetail(id!)
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<CreateProductFormInputs>({
+  const methods = useForm<CreateProductFormInputs>({
     resolver: zodResolver(createProductInputSchema),
     defaultValues: {
       name: '',
@@ -118,6 +112,15 @@ const CreateUpdateProductPage = () => {
       ],
     },
   })
+
+  const {
+    handleSubmit,
+    control,
+    setValue,
+    reset,
+    formState: { errors },
+    register,
+  } = methods
 
   const {
     fields: variantFields,
@@ -252,7 +255,7 @@ const CreateUpdateProductPage = () => {
   const isPending = isCreating || isUpdating
 
   return (
-    <FormWrapper>
+    <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <SectionPaper>
           <SectionTitle>
@@ -297,19 +300,8 @@ const CreateUpdateProductPage = () => {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Description"
-                    multiline
-                    rows={4}
-                    fullWidth
-                  />
-                )}
-              />
+              <InputLabel>Description</InputLabel>
+              <RHFTiny name="description" />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControl fullWidth error={!!errors.valueCategoryIds}>
@@ -832,7 +824,7 @@ const CreateUpdateProductPage = () => {
         file={previewFile instanceof File ? previewFile : null}
         onClose={handleClosePreview}
       />
-    </FormWrapper>
+    </FormProvider>
   )
 }
 

@@ -13,8 +13,8 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useListProductProperty } from './hooks/useListProductProperty'
 import SubProductPropertyTable from './components/SubProductPropertyTable'
+import { useListProductProperty } from './hooks/useListProductProperty'
 
 const ListProductPropertyPage = () => {
   const { data: productProperties = [], isLoading } = useListProductProperty()

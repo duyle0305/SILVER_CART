@@ -10,12 +10,7 @@ import AgoraRTC, {
   type IMicrophoneAudioTrack,
 } from 'agora-rtc-sdk-ng'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import {
   CircleButton,
   Controls,
@@ -68,26 +63,23 @@ export default function VideoCallPage() {
 
   const { state } = useLocation() as { state?: { connection?: Connection } }
   const { connectionId } = useParams<{ connectionId: string }>()
-  const [search] = useSearchParams()
   const { mutateAsync: disconnect } = useDisconnectFromChannel()
 
   const connection: Connection | null = useMemo(() => {
     return state?.connection || unstashConnection(connectionId) || null
   }, [state?.connection, connectionId])
 
-  const urlChannel = search.get('channel') ?? undefined
-  const urlToken = search.get('token') ?? undefined
-  const urlUidStr = search.get('uid')
-  const urlUid: number | null =
-    urlUidStr !== null && urlUidStr !== undefined
-      ? Number.isNaN(Number(urlUidStr))
-        ? null
-        : Number(urlUidStr)
-      : null
+  const urlChannel = connection?.channelName
+  const urlToken = connection?.token
+  const urlUid = consultant?.userId ?? null
+
+  const productId = useMemo(() => {
+    return (connection as any)?.productId
+  }, [connection])
 
   const CHANNEL = urlChannel ?? ''
   const TOKEN: string | null = urlToken ?? null
-  const UID: number | null = urlUid
+  const UID = urlUid
 
   const HEADER_NAME = connection?.fullName ?? 'Customer'
   const HEADER_AVATAR = ''
@@ -186,9 +178,11 @@ export default function VideoCallPage() {
       joinedRef.current = false
     } finally {
       const callerUserId = connection?.userId ?? ''
-      const qs = callerUserId
-        ? `?userId=${encodeURIComponent(callerUserId)}`
-        : ''
+      const params = new URLSearchParams()
+      if (callerUserId) params.set('userId', callerUserId)
+      if (productId) params.set('productId', productId)
+
+      const qs = `?${params.toString()}`
       const reportUrl = `/reports/add${qs}`
 
       if (window.opener && !window.opener.closed) {
@@ -198,6 +192,7 @@ export default function VideoCallPage() {
               type: 'VCALL_ENDED',
               userId: callerUserId,
               connectionId,
+              productId: productId,
             },
             window.location.origin
           )
@@ -242,25 +237,29 @@ export default function VideoCallPage() {
     }
 
     const init = async () => {
-      await client.join(config.agoraAppId, CHANNEL, TOKEN, UID ?? null)
-      if (canceled) return
-      joinedRef.current = true
-
-      const [audioTrack, videoTrack] =
-        await AgoraRTC.createMicrophoneAndCameraTracks()
-      if (canceled) return
-
-      audioRef.current = audioTrack
-      videoRef.current = videoTrack
-
       try {
-        await audioTrack.setEnabled(micOn)
-      } catch (e) {
-        console.error('Sync mic state failed:', e)
-      }
+        await client.join(config.agoraAppId, CHANNEL, TOKEN, UID ?? null)
+        if (canceled) return
+        joinedRef.current = true
 
-      await client.publish([audioTrack, videoTrack])
-      videoTrack.play('local-player')
+        const [audioTrack, videoTrack] =
+          await AgoraRTC.createMicrophoneAndCameraTracks()
+        if (canceled) return
+
+        audioRef.current = audioTrack
+        videoRef.current = videoTrack
+
+        try {
+          await audioTrack.setEnabled(micOn)
+        } catch (e) {
+          console.error('Sync mic state failed:', e)
+        }
+
+        await client.publish([audioTrack, videoTrack])
+        videoTrack.play('local-player')
+      } catch (error) {
+        console.error('Failed to initialize Agora:', error)
+      }
     }
 
     client.on('user-published', onUserPublished)

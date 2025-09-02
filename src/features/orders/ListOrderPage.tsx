@@ -125,10 +125,6 @@ export default function ListOrderPage() {
         color = 'error'
         label = 'Canceled'
         break
-      case 'Fail':
-        color = 'error'
-        label = 'Failed'
-        break
       default:
         color = 'default'
     }

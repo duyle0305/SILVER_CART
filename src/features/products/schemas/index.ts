@@ -8,13 +8,21 @@ const productVariantInputSchema = z.object({
   productImages: z.array(
     z.union([z.instanceof(File), z.object({ url: z.string().url() })])
   ),
-  valueIds: z.array(z.string()).optional(),
+  valueIds: z.array(z.string()).min(1, 'Please select at least one property'),
 })
+
+const stripHtml = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
 
 export const createProductInputSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
   brand: z.string().min(1, 'Brand is required'),
-  description: z.string().optional(),
+  description: z
+    .string()
+    .refine((v) => stripHtml(v).length > 0, { message: 'Vui lòng nhập mô tả' }),
   videoFile: z.instanceof(File).optional(),
   weight: z.string().min(1, 'Weight is required'),
   height: z.string().optional(),

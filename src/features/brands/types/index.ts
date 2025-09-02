@@ -4,6 +4,7 @@ export interface Brand {
   label: string
   description: string
   type: number
+  isActive: boolean
 }
 
 export interface CreateBrandPayload {

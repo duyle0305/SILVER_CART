@@ -7,30 +7,43 @@ import {
   Stack,
   IconButton,
 } from '@mui/material'
-import { useForm, useFieldArray } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
-import { useNotification } from '@/hooks/useNotification'
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
+import { useForm, useFieldArray } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useNotification } from '@/hooks/useNotification'
 import {
   createRootCategorySchema,
   type CreateRootCategoryFormInputs,
 } from './schemas'
 import { useCreateRootCategory } from './hooks/useCreateRootCategory'
+import { useRootCategoryDetails } from './hooks/useRootCategoryDetails'
+import { useUpdateCategory } from './hooks/useUpdateCategory'
+import { useEffect, useMemo } from 'react'
+import { isAxiosError } from 'axios'
 
-const CreateRootCategoryPage = () => {
+export default function CreateUpdateRootCategoryPage() {
   const navigate = useNavigate()
   const { showNotification } = useNotification()
-  const { mutate: createRootCategory, isPending } = useCreateRootCategory()
+  const { id } = useParams<{ id?: string }>()
+  const isEdit = Boolean(id)
+  const { mutate: createRootCategory, isPending: isCreating } =
+    useCreateRootCategory()
+  const { mutate: updateRootCategory, isPending: isUpdating } =
+    useUpdateCategory()
+  const { data: rootCategoryDetails, isLoading: isLoadingDetail } =
+    useRootCategoryDetails(isEdit ? id! : '')
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty, isValid },
   } = useForm<CreateRootCategoryFormInputs>({
     resolver: zodResolver(createRootCategorySchema),
+    mode: 'onChange',
     defaultValues: {
       values: [{ code: '', label: '', description: '' }],
     },
@@ -41,30 +54,74 @@ const CreateRootCategoryPage = () => {
     name: 'values',
   })
 
-  const onSubmit = (data: CreateRootCategoryFormInputs) => {
-    const payload = data.values.map((value) => ({
-      ...value,
-      description: value.description || '',
-    }))
+  const normalizedValues = useMemo(() => {
+    const src: any = rootCategoryDetails
+    if (!src) return [{ code: '', label: '', description: '' }]
+    if (Array.isArray(src.values)) {
+      return src.values.map((v: any) => ({
+        code: v?.code ?? '',
+        label: v?.label ?? '',
+        description: v?.description ?? '',
+      }))
+    }
+    return [
+      {
+        code: src.code ?? '',
+        label: src.label ?? '',
+        description: src.description ?? '',
+      },
+    ]
+  }, [rootCategoryDetails])
 
-    createRootCategory(payload, {
-      onSuccess: () => {
-        showNotification('Root category created successfully!', 'success')
-        navigate('/categories')
-      },
-      onError: (error) => {
-        showNotification(
-          error.message || 'Failed to create root category.',
-          'error'
-        )
-      },
-    })
+  useEffect(() => {
+    if (isEdit && rootCategoryDetails) {
+      reset({ values: normalizedValues })
+    }
+  }, [isEdit, rootCategoryDetails, normalizedValues, reset])
+
+  const pending = isCreating || isUpdating || (isEdit && isLoadingDetail)
+
+  const onSubmit = (data: CreateRootCategoryFormInputs) => {
+    const values = data.values.map((v) => ({
+      code: v.code.trim(),
+      label: v.label.trim(),
+      description: v.description?.trim() ?? '',
+    }))
+    if (isEdit) {
+      updateRootCategory({ id: id!, values } as any, {
+        onSuccess: () => {
+          showNotification('Root category updated successfully!', 'success')
+          navigate('/categories')
+        },
+        onError: (error: any) => {
+          const msg = isAxiosError(error)
+            ? ((error.response?.data as any)?.message ??
+              'Failed to update root category.')
+            : 'Failed to update root category.'
+          showNotification(msg, 'error')
+        },
+      })
+    } else {
+      createRootCategory(values as any, {
+        onSuccess: () => {
+          showNotification('Root category created successfully!', 'success')
+          navigate('/categories')
+        },
+        onError: (error) => {
+          const msg = isAxiosError(error)
+            ? ((error.response?.data as any)?.message ??
+              'Failed to create root category.')
+            : 'Failed to create root category.'
+          showNotification(msg, 'error')
+        },
+      })
+    }
   }
 
   return (
     <Paper component="form" sx={{ p: 3 }} onSubmit={handleSubmit(onSubmit)}>
       <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
-        Create Root Category
+        {isEdit ? 'Update Root Category' : 'Create Root Category'}
       </Typography>
 
       {fields.map((field, index) => (
@@ -110,12 +167,15 @@ const CreateRootCategoryPage = () => {
         </Paper>
       ))}
 
-      <Button
-        startIcon={<AddIcon />}
-        onClick={() => append({ code: '', label: '', description: '' })}
-      >
-        Add Value
-      </Button>
+      {!isEdit && (
+        <Button
+          startIcon={<AddIcon />}
+          onClick={() => append({ code: '', label: '', description: '' })}
+          sx={{ mb: 2 }}
+        >
+          Add Value
+        </Button>
+      )}
 
       <Stack
         direction="row"
@@ -123,15 +183,27 @@ const CreateRootCategoryPage = () => {
         justifyContent="flex-end"
         sx={{ mt: 4 }}
       >
-        <Button variant="outlined" onClick={() => navigate('/categories')}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/categories')}
+          disabled={pending}
+        >
           Cancel
         </Button>
-        <Button type="submit" variant="contained" disabled={isPending}>
-          {isPending ? 'Creating...' : 'Create'}
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={pending || !isValid || !isDirty}
+        >
+          {pending
+            ? isEdit
+              ? 'Updating...'
+              : 'Creating...'
+            : isEdit
+              ? 'Update'
+              : 'Create'}
         </Button>
       </Stack>
     </Paper>
   )
 }
-
-export default CreateRootCategoryPage

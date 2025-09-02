@@ -6,6 +6,7 @@ export interface ProductPropertyValue {
   type: number
   childrenId: string | null
   childrentLabel: string | null
+  isActive: boolean
 }
 
 export interface ProductProperty {
@@ -24,4 +25,11 @@ export interface CreateListOfValueWithValuesBodyParam {
     label: string
     description: string
   }[]
+}
+
+export interface EditProductPropertyBodyParam {
+  id: string
+  label: string
+  description?: string
+  code: string
 }

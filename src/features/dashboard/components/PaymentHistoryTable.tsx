@@ -14,6 +14,7 @@ import {
 } from '@mui/material'
 import dayjs from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { PaymentHistoryItem, PaymentHistoryBodyParam } from '../types'
 import type { PaymentFilters } from './PaymentHistoryToolbar'
 import PaymentHistoryToolbar from './PaymentHistoryToolbar'
@@ -21,12 +22,13 @@ import { StyledTableRow } from './styles/PaymentHistoryTable.styles'
 
 const statusMeta: Record<
   number,
-  { label: string; color: 'default' | 'success' | 'error' | 'primary' | 'info' }
+  { label: string; color: 'default' | 'success' | 'error' | 'warning' | 'info' }
 > = {
-  0: { label: 'TopUp', color: 'primary' },
-  1: { label: 'Paid', color: 'success' },
-  2: { label: 'Refund', color: 'error' },
-  3: { label: 'Withdraw', color: 'info' },
+  0: { label: 'TopUp', color: 'warning' },
+  1: { label: 'Paid', color: 'default' },
+  2: { label: 'Failed', color: 'error' },
+  3: { label: 'Refunded', color: 'info' },
+  4: { label: 'Withdraw', color: 'success' },
 }
 
 const headCells: readonly HeadCell<PaymentHistoryItem>[] = [
@@ -39,6 +41,7 @@ const headCells: readonly HeadCell<PaymentHistoryItem>[] = [
 ]
 
 export default function PaymentHistoryTable() {
+  const navigate = useNavigate()
   const table = useTable<PaymentHistoryItem>({ initialOrderBy: 'creationDate' })
 
   const [filters, setFilters] = useState<PaymentFilters>({
@@ -70,6 +73,11 @@ export default function PaymentHistoryTable() {
     [data?.totalItems, data?.pageSize]
   )
 
+  const onRowClick = useCallback(
+    (row: PaymentHistoryItem) => navigate(`/orders/${row.orderId}`),
+    [navigate]
+  )
+
   useEffect(() => {
     if (error) {
       showNotification(
@@ -98,7 +106,7 @@ export default function PaymentHistoryTable() {
     }
     const created = dayjs(row.creationDate)
     return (
-      <StyledTableRow key={row.id}>
+      <StyledTableRow key={row.id} hover onClick={() => onRowClick(row)}>
         <TableCell>{table.page * table.rowsPerPage + index + 1}</TableCell>
         <TableCell>
           <Stack direction="row" alignItems="center" spacing={2}>

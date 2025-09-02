@@ -6,6 +6,7 @@ import type {
 } from '@/features/users/types'
 import { apiClient } from '@/lib/axios'
 import type { BaseResponse } from '@/types/baseResponse.type'
+import type { PresenceStatus } from '../constants'
 
 export const fetchUsers = async (
   body: UserBodyParam,
@@ -39,4 +40,11 @@ export const createUser = async (data: CreateUserPayload): Promise<unknown> => {
 
 export const banUnbanUser = async (userId: string) => {
   await apiClient.put(`User/${userId}/BanOrUnbanUser`)
+}
+
+export const changePresenceStatus = async (
+  userId: string,
+  newStatus: PresenceStatus
+) => {
+  await apiClient.put(`User/ChangePresenceStatus/${userId}/${newStatus}`)
 }

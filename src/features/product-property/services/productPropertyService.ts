@@ -3,6 +3,7 @@ import type {
   ProductPropertyValue,
   ProductProperty,
   CreateListOfValueWithValuesBodyParam,
+  EditProductPropertyBodyParam,
 } from '../types'
 
 export const getListProductProperty = async (
@@ -32,4 +33,30 @@ export const createListOfValueWithValues = async (
     '/ProductProperty/CreateListOfValueWithValues',
     body
   )
+}
+
+export const deactiveOrActiveProductProperty = async (id: string) => {
+  return await apiClient.put(
+    '/ProductProperty/DeActivateOrActiveProductProperty',
+    null,
+    {
+      params: {
+        valueId: id,
+      },
+    }
+  )
+}
+
+export const editProductProperty = async (
+  body: EditProductPropertyBodyParam
+) => {
+  return await apiClient.put('/ProductProperty/EditProductProperty', body)
+}
+
+export const getProductPropertyDetail = async (
+  id: string,
+  signal: AbortSignal
+) => {
+  const response = await getAllValueProductProperty(signal)
+  return response.find((item) => item.id === id)
 }

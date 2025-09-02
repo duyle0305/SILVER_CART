@@ -6,24 +6,32 @@ import {
   StyledTitle,
 } from '@/components/layout/styles/Header.styles'
 import { useAuthContext } from '@/contexts/AuthContext'
+import { Role } from '@/features/authentication/constants'
+import { PresenceStatus } from '@/features/users/constants'
+import { useChangePresenceStatus } from '@/features/users/hooks/useChangePresenceStatus'
 import { isRouteHandle } from '@/types/router.d'
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import {
   Box,
   Breadcrumbs,
-  IconButton,
+  FormControl,
   Link,
+  MenuItem,
+  Select,
   Stack,
   Toolbar,
   Typography,
 } from '@mui/material'
-import { useLocation, useMatches, Link as RouterLink } from 'react-router-dom'
+import { useState } from 'react'
+import { Link as RouterLink, useLocation, useMatches } from 'react-router-dom'
 
 const Header = () => {
   const matches = useMatches()
   const location = useLocation()
   const { user } = useAuthContext()
+  const { mutate: changePresenceStatus } = useChangePresenceStatus()
+  const isConsultant = user?.role === Role.CONSULTANT
   const isRootPath = location.pathname === '/'
+  const [status, setStatus] = useState<PresenceStatus>(PresenceStatus.ONLINE)
 
   const crumbs = matches
     .filter(
@@ -41,7 +49,11 @@ const Header = () => {
   const title =
     crumbs.length > 0 ? crumbs[crumbs.length - 1].title : 'Dashboard'
 
-  console.log('crumbs', crumbs)
+  const handleChangeStatus = (newStatus: PresenceStatus) => {
+    if (!user?.userId) return
+    setStatus(newStatus)
+    changePresenceStatus({ userId: user.userId, newStatus })
+  }
 
   return (
     <StyledAppBar position="static">
@@ -86,9 +98,20 @@ const Header = () => {
 
         <GrowBox />
         <Stack direction="row" alignItems="center" spacing={2}>
-          <IconButton>
-            <NotificationsNoneIcon />
-          </IconButton>
+          {isConsultant && (
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={status}
+                onChange={(e) =>
+                  handleChangeStatus(e.target.value as PresenceStatus)
+                }
+              >
+                <MenuItem value={PresenceStatus.ONLINE}>Online</MenuItem>
+                <MenuItem value={PresenceStatus.OFFLINE}>Offline</MenuItem>
+                <MenuItem value={PresenceStatus.BUSY}>Busy</MenuItem>
+              </Select>
+            </FormControl>
+          )}
           <Stack direction="row" alignItems="center" spacing={1}>
             <StyledAvatar />
             <Box>

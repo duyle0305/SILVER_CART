@@ -1,24 +1,24 @@
-import DeleteIcon from '@mui/icons-material/Delete'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { useNotification } from '@/hooks/useNotification'
 import EditIcon from '@mui/icons-material/Edit'
 import {
+  Avatar,
   Button,
   CardMedia,
+  Chip,
   Divider,
   Grid,
   Paper,
+  Skeleton,
   Stack,
   Typography,
-  Chip,
-  Skeleton,
-  Avatar,
 } from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
-import { useProductDetail } from './hooks/useProductDetail'
-import { useNotification } from '@/hooks/useNotification'
-import { useEffect } from 'react'
 import dayjs from 'dayjs'
-import { useAuthContext } from '@/contexts/AuthContext'
+import { useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { authorizationAction } from '../authentication/constants'
+import { useProductDetail } from './hooks/useProductDetail'
+import { useDeactiveOrActiveProduct } from './hooks/useDeactiveOrActiveProduct'
 
 const DetailItem = ({
   label,
@@ -34,9 +34,17 @@ const DetailItem = ({
       </Typography>
     </Grid>
     <Grid size={{ xs: 8, sm: 9 }}>
-      <Typography variant="body2" fontWeight="medium">
-        {value}
-      </Typography>
+      {label === 'Description' ? (
+        <Typography
+          variant="body2"
+          fontWeight="medium"
+          dangerouslySetInnerHTML={{ __html: String(value) }}
+        />
+      ) : (
+        <Typography variant="body2" fontWeight="medium">
+          {value}
+        </Typography>
+      )}
     </Grid>
   </Grid>
 )
@@ -46,6 +54,7 @@ function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { showNotification } = useNotification()
   const { data: product, isLoading, error } = useProductDetail(id!)
+  const { mutateAsync: toggleProductStatus } = useDeactiveOrActiveProduct()
   const { user } = useAuthContext()
   const allowModifyProducts =
     (user?.role &&
@@ -89,19 +98,36 @@ function ProductDetailPage() {
         alignItems="center"
         sx={{ mb: 2 }}
       >
-        <Typography variant="h5" fontWeight="bold">
-          Product Information
-        </Typography>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="h5" fontWeight="bold">
+            Product Information
+          </Typography>
+          <Chip
+            size="small"
+            color={product.isActive ? 'success' : 'error'}
+            label={product.isActive ? 'Active' : 'Inactive'}
+          />
+        </Stack>
         <Stack direction="row" spacing={1}>
           {allowModifyProducts && (
             <>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-              >
-                Delete
-              </Button>
+              {product.isActive ? (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => toggleProductStatus(product.id)}
+                >
+                  Deactivate
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={() => toggleProductStatus(product.id)}
+                >
+                  Activate
+                </Button>
+              )}
               <Button
                 variant="contained"
                 startIcon={<EditIcon />}

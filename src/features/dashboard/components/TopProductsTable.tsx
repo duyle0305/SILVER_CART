@@ -20,10 +20,7 @@ const TopProductsTable = ({ products }: TopProductsTableProps) => {
         <TableCell align="center">{product.totalQuantity}</TableCell>
         <TableCell align="right">
           <Typography variant="body2" color="success" fontWeight={500}>
-            {product.totalRevenue.toLocaleString('vi-VN', {
-              style: 'currency',
-              currency: 'VND',
-            })}
+            {product.totalRevenue.toLocaleString()}
           </Typography>
         </TableCell>
       </TableRow>

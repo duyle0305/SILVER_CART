@@ -68,7 +68,6 @@ export default function OrderTableToolbar({
                 </MenuItem>
                 <MenuItem value={OrderStatus.SHIPPING}>Shipping</MenuItem>
                 <MenuItem value={OrderStatus.CANCELED}>Canceled</MenuItem>
-                <MenuItem value={OrderStatus.FAIL}>Failed</MenuItem>
               </Select>
             </FormControl>
           </Grid>

@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { useNotification } from '@/hooks/useNotification'
 import {
   Button,
+  IconButton,
   Paper,
   Stack,
   TableCell,
@@ -15,6 +16,7 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import { BaseTable } from '@/components/common/BaseTable'
 import { useTable } from '@/hooks/useTable'
+import BorderColorIcon from '@mui/icons-material/BorderColor'
 
 const subCategoryHeadCells: readonly HeadCell<RootCategory>[] = [
   { id: 'code', label: 'Code' },
@@ -36,6 +38,18 @@ export default function SubCategoryDetailPage() {
       <TableCell>{row.code}</TableCell>
       <TableCell>{row.label}</TableCell>
       <TableCell>{row.description}</TableCell>
+      <TableCell>
+        <IconButton
+          color="primary"
+          onClick={(e) => {
+            e.stopPropagation()
+            navigate(`edit/${row.id}`)
+          }}
+          size="small"
+        >
+          <BorderColorIcon fontSize="small" />
+        </IconButton>
+      </TableCell>
     </TableRow>
   )
 
@@ -75,7 +89,6 @@ export default function SubCategoryDetailPage() {
         toolbar={null}
         showCheckbox={false}
         showPagination={false}
-        allowModify={false}
         isSortable={false}
       />
     </Paper>

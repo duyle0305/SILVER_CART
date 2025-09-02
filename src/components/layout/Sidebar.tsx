@@ -23,6 +23,7 @@ import { ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 
 interface SidebarCategory {
   name: string
@@ -83,6 +84,11 @@ const Sidebar = () => {
             text: 'Orders',
             icon: <LocalShippingIcon />,
             path: '/orders',
+          },
+          {
+            text: 'Withdraw Requests',
+            icon: <AccountBalanceWalletIcon />,
+            path: '/withdraw-requests',
           },
         ],
       })

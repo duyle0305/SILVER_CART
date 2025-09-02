@@ -46,10 +46,8 @@ const ProductTableToolbar = ({
   const { data: categories = [], isLoading: isLoadingCategories } =
     useCategoriesNoValue()
   const { user } = useAuthContext()
-  const allowModifyProducts =
-    (user?.role &&
-      authorizationAction.allowCreateProducts.includes(user.role)) ||
-    (user?.role && authorizationAction.allowUpdateProducts.includes(user.role))
+  const allowCreateProducts =
+    user?.role && authorizationAction.allowCreateProducts.includes(user.role)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFiltersChange(e.target.name as keyof ProductFilters, e.target.value)
@@ -80,7 +78,7 @@ const ProductTableToolbar = ({
         <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
           All products
         </Typography>
-        {allowModifyProducts && (
+        {allowCreateProducts && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}

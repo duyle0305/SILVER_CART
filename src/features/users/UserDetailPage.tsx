@@ -14,7 +14,6 @@ import PersonIcon from '@mui/icons-material/Person'
 import PhoneIcon from '@mui/icons-material/Phone'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
-
 import {
   Avatar,
   Box,
@@ -43,7 +42,6 @@ import dayjs from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { authorizationAction } from '../authentication/constants'
-
 import { useReportByUserId } from '../reports/hooks/useReportByUserId'
 import { useBanOrUnbanUser } from './hooks/useBanOrUnbanUser'
 import { useUserDetail } from './hooks/useUserDetail'

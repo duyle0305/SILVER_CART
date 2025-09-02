@@ -1,33 +1,50 @@
-import {
-  Paper,
-  Typography,
-  Grid,
-  TextField,
-  Button,
-  Stack,
-  IconButton,
-} from '@mui/material'
-import { useForm, useFieldArray } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
 import { useNotification } from '@/hooks/useNotification'
+import { zodResolver } from '@hookform/resolvers/zod'
 import AddIcon from '@mui/icons-material/Add'
 import CloseIcon from '@mui/icons-material/Close'
-import { createBrandSchema, type CreateBrandFormInputs } from './schemas'
-import { useCreateBrand } from './hooks/useCreateBrand'
+import {
+  Button,
+  Grid,
+  IconButton,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { isAxiosError } from 'axios'
+import { useEffect, useMemo } from 'react'
+import { useFieldArray, useForm } from 'react-hook-form'
+import { useNavigate, useParams } from 'react-router-dom'
 
-const CreateBrandPage = () => {
+import { createBrandSchema, type CreateBrandFormInputs } from './schemas'
+
+import { useBrandDetails } from './hooks/useBrandDetails'
+import { useCreateBrand } from './hooks/useCreateBrand'
+import { useUpdateBrand } from './hooks/useEditBrand'
+
+export default function CreateUpdateBrandPage() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id?: string }>()
+  const isEdit = Boolean(id)
+  const title = isEdit ? 'Update Brand' : 'Create Brand'
+  const cta = isEdit ? 'Update' : 'Create'
+
   const { showNotification } = useNotification()
-  const { mutate: createBrand, isPending } = useCreateBrand()
+  const { data: brandDetails, isLoading: isLoadingDetail } = useBrandDetails(
+    isEdit ? id! : ''
+  )
+  const { mutate: createBrand, isPending: isCreating } = useCreateBrand()
+  const { mutate: updateBrand, isPending: isUpdating } = useUpdateBrand()
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty, isValid },
   } = useForm<CreateBrandFormInputs>({
     resolver: zodResolver(createBrandSchema),
+    mode: 'onChange',
     defaultValues: {
       values: [{ code: '', label: '', description: '' }],
     },
@@ -38,27 +55,76 @@ const CreateBrandPage = () => {
     name: 'values',
   })
 
+  const normalizedValues = useMemo(() => {
+    if (!brandDetails) return [{ code: '', label: '', description: '' }]
+
+    if (Array.isArray((brandDetails as any).values)) {
+      return (brandDetails as any).values.map((v: any) => ({
+        code: v?.code ?? '',
+        label: v?.label ?? '',
+        description: v?.description ?? '',
+      }))
+    }
+
+    return [
+      {
+        code: (brandDetails as any).code ?? '',
+        label: (brandDetails as any).label ?? '',
+        description: (brandDetails as any).description ?? '',
+      },
+    ]
+  }, [brandDetails])
+
+  useEffect(() => {
+    if (isEdit && brandDetails) {
+      reset({ values: normalizedValues })
+    }
+  }, [isEdit, brandDetails, normalizedValues, reset])
+
+  const pending = isCreating || isUpdating || (isEdit && isLoadingDetail)
+
   const onSubmit = (data: CreateBrandFormInputs) => {
-    const payload = data.values.map((value) => ({
-      ...value,
-      description: value.description || '',
+    const values = data.values.map((v) => ({
+      code: v.code.trim(),
+      label: v.label.trim(),
+      description: v.description?.trim() ?? '',
     }))
 
-    createBrand(payload, {
-      onSuccess: () => {
-        showNotification('Brand created successfully!', 'success')
-        navigate('/brands')
-      },
-      onError: (error) => {
-        showNotification(error.message || 'Failed to create brand.', 'error')
-      },
-    })
+    if (isEdit) {
+      updateBrand({ id: id!, values } as any, {
+        onSuccess: () => {
+          showNotification('Brand updated successfully!', 'success')
+          navigate('/brands')
+        },
+        onError: (err: any) => {
+          const msg = isAxiosError(err)
+            ? ((err.response?.data as any)?.message ??
+              'Failed to update brand.')
+            : 'Failed to update brand.'
+          showNotification(msg, 'error')
+        },
+      })
+    } else {
+      createBrand(values as any, {
+        onSuccess: () => {
+          showNotification('Brand created successfully!', 'success')
+          navigate('/brands')
+        },
+        onError: (err) => {
+          const msg = isAxiosError(err)
+            ? ((err.response?.data as any)?.message ??
+              'Failed to create brand.')
+            : 'Failed to create brand.'
+          showNotification(msg, 'error')
+        },
+      })
+    }
   }
 
   return (
     <Paper component="form" sx={{ p: 3 }} onSubmit={handleSubmit(onSubmit)}>
       <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
-        Create Brand
+        {title}
       </Typography>
 
       {fields.map((field, index) => (
@@ -74,6 +140,7 @@ const CreateBrandPage = () => {
               </IconButton>
             </Stack>
           )}
+
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
@@ -84,6 +151,7 @@ const CreateBrandPage = () => {
                 helperText={errors.values?.[index]?.code?.message}
               />
             </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 {...register(`values.${index}.label`)}
@@ -93,6 +161,7 @@ const CreateBrandPage = () => {
                 helperText={errors.values?.[index]?.label?.message}
               />
             </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 {...register(`values.${index}.description`)}
@@ -107,25 +176,27 @@ const CreateBrandPage = () => {
       <Button
         startIcon={<AddIcon />}
         onClick={() => append({ code: '', label: '', description: '' })}
+        sx={{ mb: 2 }}
       >
         Add Value
       </Button>
 
-      <Stack
-        direction="row"
-        spacing={2}
-        justifyContent="flex-end"
-        sx={{ mt: 4 }}
-      >
-        <Button variant="outlined" onClick={() => navigate('/brands')}>
+      <Stack direction="row" spacing={2} justifyContent="flex-end">
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/brands')}
+          disabled={pending}
+        >
           Cancel
         </Button>
-        <Button type="submit" variant="contained" disabled={isPending}>
-          {isPending ? 'Creating...' : 'Create'}
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={pending || !isValid || !isDirty}
+        >
+          {pending ? `${cta}...` : cta}
         </Button>
       </Stack>
     </Paper>
   )
 }
-
-export default CreateBrandPage

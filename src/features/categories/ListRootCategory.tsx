@@ -5,6 +5,7 @@ import { useTable } from '@/hooks/useTable'
 import AddIcon from '@mui/icons-material/Add'
 import {
   Button,
+  IconButton,
   Paper,
   Stack,
   TableCell,
@@ -13,17 +14,18 @@ import {
 } from '@mui/material'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCategories } from './hooks/useCategories'
-import type { Category } from './types'
+import { useRootCategories } from './hooks/useRootCategories'
+import type { RootCategory } from './types'
+import BorderColorIcon from '@mui/icons-material/BorderColor'
 
-const headCells: readonly HeadCell<Category>[] = [
+const headCells: readonly HeadCell<RootCategory>[] = [
   { id: 'label', label: 'Label' },
-  { id: 'note', label: 'Note' },
+  { id: 'code', label: 'Code' },
 ]
 
 export default function ListRootCategory() {
-  const { data = [], isLoading, isError } = useCategories()
-  const table = useTable<Category>({
+  const { data = [], isLoading, isError } = useRootCategories()
+  const table = useTable<RootCategory>({
     initialOrderBy: 'code',
   })
   const navigate = useNavigate()
@@ -33,16 +35,23 @@ export default function ListRootCategory() {
     navigate(`sub-category/${id}`)
   }
 
-  const renderRow = (row: Category, _: boolean, index: number) => (
-    <TableRow
-      key={row.id}
-      hover
-      onClick={() => handleRowClick(row.childrenId)}
-      sx={{ cursor: 'pointer' }}
-    >
+  const renderRow = (row: RootCategory, _: boolean, index: number) => (
+    <TableRow key={row.id} hover onClick={() => handleRowClick(row.childrenId)}>
       <TableCell>{index + 1}</TableCell>
       <TableCell>{row.label}</TableCell>
-      <TableCell>{row.description}</TableCell>
+      <TableCell>{row.code}</TableCell>
+      <TableCell>
+        <IconButton
+          color="primary"
+          onClick={(e) => {
+            e.stopPropagation()
+            navigate(`edit/${row.id}`)
+          }}
+          size="small"
+        >
+          <BorderColorIcon fontSize="small" />
+        </IconButton>
+      </TableCell>
     </TableRow>
   )
 
@@ -72,7 +81,7 @@ export default function ListRootCategory() {
           Add root category
         </Button>
       </Stack>
-      <BaseTable<Category>
+      <BaseTable<RootCategory>
         data={data}
         headCells={headCells}
         isLoading={isLoading}
@@ -82,7 +91,6 @@ export default function ListRootCategory() {
         toolbar={null}
         showCheckbox={false}
         showPagination={false}
-        allowModify={false}
         isSortable={false}
       />
     </Paper>

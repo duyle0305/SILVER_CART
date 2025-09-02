@@ -15,6 +15,7 @@ import BorderColorIcon from '@mui/icons-material/BorderColor'
 import {
   Avatar,
   Box,
+  Chip,
   IconButton,
   Stack,
   TableCell,
@@ -30,6 +31,7 @@ const productHeadCells: readonly HeadCell<ProductListItem>[] = [
   { id: 'brand', label: 'Brand' },
   { id: 'price', label: 'Price' },
   { id: 'categories', label: 'Categories' },
+  { id: 'isActive', label: 'Status' },
 ]
 
 function ProductListPage() {
@@ -111,6 +113,13 @@ function ProductListPage() {
             {product.categories.map((cat) => cat.label).join(', ')}
           </Typography>
         </Tooltip>
+      </TableCell>
+      <TableCell>
+        {product.isActive ? (
+          <Chip label="Active" color="success" size="small" />
+        ) : (
+          <Chip label="Deactive" color="error" size="small" />
+        )}
       </TableCell>
       {allowModifyProducts && (
         <TableCell>

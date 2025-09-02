@@ -14,6 +14,7 @@ export interface ProductListItem {
   price: number
   description: string
   imageUrl: string
+  isActive: boolean
   categories: ProductCategoryBrief[]
 }
 
@@ -61,6 +62,7 @@ export interface ProductDetail {
   manufactureDate: string
   expirationDate: string
   categories: ProductCategoryBrief[]
+  isActive: boolean
   productVariants: ProductVariantDetail[]
 }
 

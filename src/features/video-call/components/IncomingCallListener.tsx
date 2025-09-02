@@ -12,9 +12,9 @@ import {
 import { styled } from '@mui/material/styles'
 import { useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useDeclineCall } from '../hooks/useDeclineCall'
 import { useGetConnection } from '../hooks/useGetConnection'
 import type { Connection } from '../types'
-import { useDeclineCall } from '../hooks/useDeclineCall'
 
 const CallerRow = styled(Stack)(({ theme }) => ({
   alignItems: 'center',
@@ -55,6 +55,8 @@ export default function IncomingCallListener() {
 
   const { data: connection } = useGetConnection(user?.userId ?? '', enabled)
 
+  const productId = (connection as any)?.productId
+
   const isCall = connection?.type === 'CALL'
   const open =
     !!connection && isCall && !isInCallPage && !isDismissed(connection?.id)
@@ -74,12 +76,7 @@ export default function IncomingCallListener() {
     if (!connection) return
     stashConnection(connection)
 
-    const params = new URLSearchParams()
-    params.set('channel', connection.channelName)
-    if (connection.token) params.set('token', connection.token)
-    params.set('popup', '1')
-
-    const url = `/video-call/${connection.id}?${params.toString()}`
+    const url = `/video-call/${connection.id}`
 
     const popup = window.open(
       url,
@@ -90,8 +87,11 @@ export default function IncomingCallListener() {
     if (popup) {
       popupRef.current = popup
       markDismissed(connection.id)
+      if (productId) {
+        navigate(`/products/${productId}`)
+      }
     } else {
-      navigate(url, { state: { connection }, replace: false })
+      navigate(url, { state: { connection } })
     }
   }
 
@@ -103,9 +103,14 @@ export default function IncomingCallListener() {
 
       if (data.type === 'VCALL_ENDED') {
         const callerUserId = data.userId as string | undefined
-        const qs = callerUserId
-          ? `?userId=${encodeURIComponent(callerUserId)}`
-          : ''
+        const receivedProductId = data.productId as string | undefined
+
+        const params = new URLSearchParams()
+        if (callerUserId) params.set('userId', callerUserId)
+        if (receivedProductId) params.set('productId', receivedProductId)
+
+        const qs = `?${params.toString()}`
+
         navigate(`/reports/add${qs}`, { replace: true })
 
         try {
@@ -129,10 +134,10 @@ export default function IncomingCallListener() {
         <Typography variant="body2">is calling you…</Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleDecline} variant="outlined" loading={declining}>
+        <Button onClick={handleDecline} variant="outlined" disabled={declining}>
           Decline
         </Button>
-        <Button onClick={handleAccept} variant="contained" loading={declining}>
+        <Button onClick={handleAccept} variant="contained" disabled={declining}>
           Accept
         </Button>
       </DialogActions>

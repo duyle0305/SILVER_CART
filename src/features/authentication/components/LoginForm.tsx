@@ -1,3 +1,4 @@
+import { useAuthContext } from '@/contexts/AuthContext'
 import { useLogin } from '@/features/authentication/hooks/useLogin'
 import {
   loginSchema,
@@ -5,7 +6,6 @@ import {
 } from '@/features/authentication/schemas'
 import {
   FooterContainer,
-  // ForgotPasswordLink,
   FormContainer,
   LoginButton,
   StyledForm,
@@ -25,7 +25,6 @@ import {
 import { useToggle } from 'ahooks'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import { useAuthContext } from '@/contexts/AuthContext'
 
 const LoginForm = () => {
   const navigate = useNavigate()
@@ -42,7 +41,6 @@ const LoginForm = () => {
     defaultValues: {
       userName: '',
       password: '',
-      deviceId: '',
       stayLoggedIn: false,
     },
   })
@@ -51,7 +49,6 @@ const LoginForm = () => {
     const payload = {
       userName: data.userName,
       password: data.password,
-      deviceId: data.deviceId,
     }
 
     loginMutation(payload, {
@@ -115,10 +112,6 @@ const LoginForm = () => {
         >
           {isPending ? 'Logging in...' : 'Log In'}
         </LoginButton>
-
-        {/* <ForgotPasswordLink underline="hover">
-          I forgot my password
-        </ForgotPasswordLink> */}
 
         <Divider sx={{ m: 4 }} />
         <FooterContainer>

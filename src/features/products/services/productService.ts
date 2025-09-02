@@ -39,3 +39,7 @@ export const createProduct = async (data: CreateProductPayload) => {
 export const updateProduct = async (id: string, data: CreateProductPayload) => {
   await apiClient.put(`Product/Update/${id}`, data)
 }
+
+export const deactiveOrActiveProduct = async (id: string) => {
+  await apiClient.put(`Product/DeActiveOrActiveProduct/${id}`)
+}

@@ -12,12 +12,9 @@ import { apiClient } from '@/lib/axios'
 export const getCategories = async (
   signal: AbortSignal
 ): Promise<Category[]> => {
-  const response = await apiClient.get<Category[]>(
-    'Category/GetRootListValueCategory',
-    {
-      signal,
-    }
-  )
+  const response = await apiClient.get<Category[]>('Category/GetListCategory', {
+    signal,
+  })
   return response
 }
 
@@ -86,4 +83,27 @@ export const getListValueCategoryById = async (
       signal,
     }
   )
+}
+
+export const getRootCategoryDetails = async (
+  id: string,
+  signal: AbortSignal
+) => {
+  const response = await getRootListValueCategory(signal)
+  return response.find((category) => category.id === id)
+}
+
+export const getSubCategoryDetails = async (
+  id: string,
+  subId: string,
+  signal: AbortSignal
+) => {
+  const response = await getListValueCategoryById(id, signal)
+  return response.find((category) => category.id === subId)
+}
+
+export const updateCategoryValue = async (
+  body: CategoryRootCreateBodyParam & { id: string }
+) => {
+  await apiClient.put(`Category/UpdateCategoryValue`, body)
 }

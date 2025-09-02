@@ -15,3 +15,20 @@ export const createValueOfBrandRoot = async (
 ): Promise<void> => {
   await apiClient.post('/Brand/CreateValueOfBrandRoot', data)
 }
+
+export const deactiveOrActiveBrand = async (id: string) => {
+  await apiClient.put(`/Brand/DeActivateOrActiveBrand`, null, {
+    params: {
+      valueId: id,
+    },
+  })
+}
+
+export const editBrand = async (data: CreateBrandPayload & { id: string }) => {
+  await apiClient.put(`/Brand/EditBrand`, data)
+}
+
+export const getBrandDetails = async (id: string, signal: AbortSignal) => {
+  const response = await getListValueBrand(signal)
+  return response.find((brand) => brand.id === id)
+}
