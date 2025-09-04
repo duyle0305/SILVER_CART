@@ -146,11 +146,16 @@ const CreateUserPage = () => {
                     label="Role"
                     disabled={isLoadingRoles}
                   >
-                    {roles.map((role) => (
-                      <MenuItem key={role.id} value={role.id}>
-                        {role.name}
-                      </MenuItem>
-                    ))}
+                    {roles
+                      .filter(
+                        (role) =>
+                          role.name !== 'Elder' && role.name !== 'Guardian'
+                      )
+                      .map((role) => (
+                        <MenuItem key={role.id} value={role.id}>
+                          {role.name}
+                        </MenuItem>
+                      ))}
                   </Select>
                 )}
               />
