@@ -6,7 +6,7 @@ import type {
 } from '@/features/users/types'
 import { apiClient } from '@/lib/axios'
 import type { BaseResponse } from '@/types/baseResponse.type'
-import type { PresenceStatus } from '../constants'
+import { PresenceStatus } from '../constants'
 
 export const fetchUsers = async (
   body: UserBodyParam,
@@ -47,4 +47,21 @@ export const changePresenceStatus = async (
   newStatus: PresenceStatus
 ) => {
   await apiClient.put(`User/ChangePresenceStatus/${userId}/${newStatus}`)
+}
+
+export const getConsultantStatus = async (
+  id: string,
+  signal: AbortSignal
+): Promise<PresenceStatus> => {
+  const response = await apiClient.get<{ data: number } | number>(
+    `User/GetConsutantStatus`,
+    {
+      params: { id },
+      signal,
+    }
+  )
+
+  return typeof response === 'object' && response !== null && 'data' in response
+    ? response.data
+    : response
 }

@@ -72,14 +72,12 @@ export default function IncomingCallListener() {
 
   const handleAccept = () => {
     if (!connection) return
-    console.log('🚀 Opening video call in new tab (full browser capabilities)')
     // Store the connection data in session storage so the video call page can access it
     stashConnection(connection)
 
     // Open video call in new tab with full browser capabilities
     const url = `/video-call/${connection.id}?tab=true`
 
-    console.log('📍 Opening new tab with:', url)
     // Open in new tab - this maintains full WebRTC capabilities unlike popup windows
     const newTab = window.open(url, '_blank')
 
@@ -87,7 +85,6 @@ export default function IncomingCallListener() {
       // Store reference to the tab for communication
       popupRef.current = newTab
       markDismissed(connection.id)
-      console.log('✅ Video call tab opened successfully')
     } else {
       console.error(
         '❌ Failed to open video call tab - popup blocker may be active'
@@ -97,38 +94,19 @@ export default function IncomingCallListener() {
 
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
-      console.log(
-        'IncomingCallListener received message:',
-        e.data,
-        'from origin:',
-        e.origin
-      )
-
       const data = e.data
       if (!data || typeof data !== 'object') {
-        console.log('Invalid message data:', data)
         return
       }
 
       if (data.type === 'VCALL_ENDED') {
-        console.log('Processing VCALL_ENDED message:', data)
-
         const callerUserId = data.userId as string | undefined
         const receivedProductId = data.productId as string | undefined
         const shouldNavigate = data.shouldNavigateToReports !== false // Default to true
 
-        console.log('Navigation data:', {
-          callerUserId,
-          receivedProductId,
-          shouldNavigate,
-          hasPopupRef: !!popupRef.current,
-          popupClosed: popupRef.current?.closed,
-        })
-
         // Close popup first
         try {
           if (popupRef.current && !popupRef.current.closed) {
-            console.log('Closing popup...')
             popupRef.current.close()
           }
         } catch (error) {
@@ -145,8 +123,6 @@ export default function IncomingCallListener() {
           const qs = `?${params.toString()}`
           const targetUrl = `/reports/add${qs}`
 
-          console.log('Navigating to:', targetUrl)
-
           // Small delay to ensure popup is closed before navigation
           setTimeout(() => {
             navigate(targetUrl, { replace: true })
@@ -155,10 +131,8 @@ export default function IncomingCallListener() {
       }
     }
 
-    console.log('IncomingCallListener: Adding message listener')
     window.addEventListener('message', onMessage)
     return () => {
-      console.log('IncomingCallListener: Removing message listener')
       window.removeEventListener('message', onMessage)
     }
   }, [navigate])

@@ -112,11 +112,11 @@ const Sidebar = () => {
               path: '/reports',
             },
           ],
-        },
-        {
-          name: 'General',
-          items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
         }
+        // {
+        //   name: 'General',
+        //   items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
+        // }
       )
     }
 
@@ -148,11 +148,11 @@ const Sidebar = () => {
               path: '/reports',
             },
           ],
-        },
-        {
-          name: 'General',
-          items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
         }
+        // {
+        //   name: 'General',
+        //   items: [{ text: 'Chat Box', icon: <ChatIcon />, path: '/chat' }],
+        // }
       )
     }
 

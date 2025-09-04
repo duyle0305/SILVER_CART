@@ -15,7 +15,7 @@ import {
 
 export type TOrderStatus =
   | 'Paid'
-  | 'PendingChecked'
+  // | 'PendingChecked'
   | 'PendingConfirm'
   | 'PendingPickup'
   | 'PendingDelivery'
@@ -29,7 +29,7 @@ const PIPELINE: Array<{
   Icon: React.ElementType
 }> = [
   { key: 'Paid', label: 'Paid', Icon: CheckCircleIcon },
-  { key: 'PendingChecked', label: 'Pending Check', Icon: FactCheckIcon },
+  // { key: 'PendingChecked', label: 'Pending Check', Icon: FactCheckIcon },
   { key: 'PendingConfirm', label: 'Pending Confirm', Icon: VerifiedIcon },
   { key: 'PendingPickup', label: 'Pending Pickup', Icon: StorefrontIcon },
   {

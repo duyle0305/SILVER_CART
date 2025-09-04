@@ -9,6 +9,7 @@ import { useAuthContext } from '@/contexts/AuthContext'
 import { Role } from '@/features/authentication/constants'
 import { PresenceStatus } from '@/features/users/constants'
 import { useChangePresenceStatus } from '@/features/users/hooks/useChangePresenceStatus'
+import { useGetConsultantStatus } from '@/features/users/hooks/useGetConsultantStatus'
 import { isRouteHandle } from '@/types/router.d'
 import {
   Box,
@@ -21,17 +22,25 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { Link as RouterLink, useLocation, useMatches } from 'react-router-dom'
 
 const Header = () => {
   const matches = useMatches()
   const location = useLocation()
   const { user } = useAuthContext()
-  const { mutate: changePresenceStatus } = useChangePresenceStatus()
+  const { mutate: changePresenceStatus, isSuccess } = useChangePresenceStatus()
+  const {
+    data: consultantStatusQuery,
+    isLoading,
+    refetch: refetchConsultantStatus,
+  } = useGetConsultantStatus(
+    user?.userId ?? '',
+    !!user?.userId && user.role === Role.CONSULTANT
+  )
+  const consultantStatus = consultantStatusQuery ?? PresenceStatus.OFFLINE
   const isConsultant = user?.role === Role.CONSULTANT
   const isRootPath = location.pathname === '/'
-  const [status, setStatus] = useState<PresenceStatus>(PresenceStatus.ONLINE)
 
   const crumbs = matches
     .filter(
@@ -51,9 +60,14 @@ const Header = () => {
 
   const handleChangeStatus = (newStatus: PresenceStatus) => {
     if (!user?.userId) return
-    setStatus(newStatus)
     changePresenceStatus({ userId: user.userId, newStatus })
   }
+
+  useEffect(() => {
+    if (isSuccess) {
+      refetchConsultantStatus()
+    }
+  }, [isSuccess])
 
   return (
     <StyledAppBar position="static">
@@ -101,10 +115,12 @@ const Header = () => {
           {isConsultant && (
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <Select
-                value={status}
+                key={`consultant-status-${consultantStatus}`}
+                value={consultantStatus}
                 onChange={(e) =>
-                  handleChangeStatus(e.target.value as PresenceStatus)
+                  handleChangeStatus(Number(e.target.value) as PresenceStatus)
                 }
+                disabled={isLoading}
               >
                 <MenuItem value={PresenceStatus.ONLINE}>Online</MenuItem>
                 <MenuItem value={PresenceStatus.OFFLINE}>Offline</MenuItem>

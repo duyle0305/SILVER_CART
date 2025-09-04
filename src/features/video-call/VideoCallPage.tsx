@@ -215,9 +215,7 @@ export default function VideoCallPage() {
       mediaType: 'audio' | 'video'
     ) => {
       try {
-        console.log(`User ${user.uid} published ${mediaType}. Subscribing...`)
         await client.subscribe(user, mediaType)
-        console.log(`Successfully subscribed to ${user.uid}'s ${mediaType}.`)
         setRemoteUsers(Array.from(client.remoteUsers))
       } catch (error) {
         console.error(
@@ -228,12 +226,10 @@ export default function VideoCallPage() {
     }
 
     const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
-      console.log(`User ${user.uid} unpublished their media.`)
       setRemoteUsers(Array.from(client.remoteUsers))
     }
 
     const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
-      console.log(`User ${user.uid} left the channel.`)
       setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.uid !== user.uid))
       if (!leavingRef.current) {
         void handleDisconnect()
@@ -254,13 +250,8 @@ export default function VideoCallPage() {
         await client.join(config.agoraAppId, CHANNEL, TOKEN, UID ?? null)
         if (isCancelled) return
         joinedRef.current = true
-        console.log('✅ Successfully joined channel:', CHANNEL)
 
         if (client.remoteUsers.length > 0) {
-          console.log(
-            'Found existing users:',
-            client.remoteUsers.map((u) => u.uid)
-          )
           for (const user of client.remoteUsers) {
             if (user.hasVideo) await handleUserPublished(user, 'video')
             if (user.hasAudio) await handleUserPublished(user, 'audio')
@@ -280,7 +271,6 @@ export default function VideoCallPage() {
         await audioTrack.setEnabled(micOn)
 
         await client.publish([audioTrack, videoTrack])
-        console.log('✅ Successfully published local tracks.')
 
         videoTrack.play('local-player')
       } catch (error) {
@@ -292,7 +282,6 @@ export default function VideoCallPage() {
 
     return () => {
       isCancelled = true
-      console.log('Cleaning up Agora instance...')
       client.removeAllListeners()
     }
   }, [client, CHANNEL, TOKEN, UID, connection])
@@ -303,9 +292,7 @@ export default function VideoCallPage() {
     remoteUsers.forEach((user) => {
       if (user.hasVideo && user.videoTrack) {
         try {
-          console.log(`Attempting to play video for user ${user.uid}`)
           user.videoTrack.play('remote-player')
-          console.log(`✅ Video for ${user.uid} is playing.`)
         } catch (err) {
           console.error(`❌ Failed to play video for ${user.uid}:`, err)
         }
@@ -314,9 +301,7 @@ export default function VideoCallPage() {
       if (user.hasAudio && user.audioTrack) {
         if (!user.audioTrack.isPlaying) {
           try {
-            console.log(`Attempting to play audio for user ${user.uid}`)
             user.audioTrack.play()
-            console.log(`✅ Audio for ${user.uid} is playing.`)
           } catch (err) {
             console.error(`❌ Failed to play audio for ${user.uid}:`, err)
           }

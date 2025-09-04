@@ -80,8 +80,6 @@ export default function ListWithDrawRequestPage() {
       [WithdrawRequestStatus.APPROVED]: 'Approved',
       [WithdrawRequestStatus.REJECTED]: 'Rejected',
     }
-    console.log('label', status)
-
     return <Chip label={label[status]} color={color[status]} />
   }
 
@@ -95,7 +93,7 @@ export default function ListWithDrawRequestPage() {
         <TableCell>{row.bankAccountNumber}</TableCell>
         <TableCell>{row.accountHolder}</TableCell>
         <TableCell>{row.note}</TableCell>
-        <TableCell>{row.amount}</TableCell>
+        <TableCell>{row.amount.toLocaleString()} VND</TableCell>
         <TableCell>{renderRowStatus(row.status)}</TableCell>
         <TableCell>{dayjs(row.createdAt).format('LLL')}</TableCell>
         <TableCell>

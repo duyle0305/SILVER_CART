@@ -30,6 +30,7 @@ import { useFakeGHNChangeStatus } from './hooks/useFakeGHNChangeStatus'
 import { useCreateOrderInGHN } from './hooks/useCreateOrderInGHN'
 import { authorizationAction } from '../authentication/constants'
 import { useAuthContext } from '@/contexts/AuthContext'
+import { useFakeGHNCanceledOrder } from './hooks/useFakeGHNCancel'
 
 const currency = (v: number) => v.toLocaleString('vi-VN') + ' VND'
 
@@ -40,10 +41,6 @@ const statusChip = (status: string) => {
     case 'Paid':
       color = 'success'
       label = 'Paid'
-      break
-    case 'PendingChecked':
-      color = 'warning'
-      label = 'Pending Checked'
       break
     case 'PendingConfirm':
       color = 'warning'
@@ -78,7 +75,8 @@ const statusChip = (status: string) => {
 const renderStatusAction = (
   status: string,
   isLoading: boolean,
-  onAction: () => void
+  onAction: () => void,
+  onCancel: () => void
 ) => {
   switch (status) {
     case 'Paid':
@@ -89,34 +87,33 @@ const renderStatusAction = (
           onClick={onAction}
           loading={isLoading}
         >
-          Check
-        </Button>
-      )
-
-    case 'PendingChecked':
-      return (
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={onAction}
-          loading={isLoading}
-        >
           Confirm
         </Button>
       )
+
     case 'PendingConfirm':
     case 'PendingPickup':
     case 'PendingDelivery':
     case 'Shipping':
       return (
-        <Button
-          variant="contained"
-          color="info"
-          onClick={onAction}
-          loading={isLoading}
-        >
-          GHN change status
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="contained"
+            color="info"
+            onClick={onAction}
+            loading={isLoading}
+          >
+            GHN change status
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={onCancel}
+            loading={isLoading}
+          >
+            GHN cancel status
+          </Button>
+        </Stack>
       )
 
     case 'Delivered':
@@ -140,6 +137,10 @@ export default function OrderDetailPage() {
   const { mutateAsync: changeStatus, isPending } = useCreateOrderInGHN()
   const { mutateAsync: fakeGHNChangeStatus, isPending: isFakePending } =
     useFakeGHNChangeStatus()
+  const {
+    mutateAsync: fakeGHNCanceledOrder,
+    isPending: isFakeCanceledPending,
+  } = useFakeGHNCanceledOrder()
 
   useEffect(() => {
     if (error) {
@@ -202,7 +203,7 @@ export default function OrderDetailPage() {
                 'PendingDelivery',
                 'Shipping',
               ].includes(order.orderStatus)
-                ? isFakePending
+                ? isFakePending || isFakeCanceledPending
                 : isPending,
               async () => {
                 if (
@@ -217,6 +218,9 @@ export default function OrderDetailPage() {
                 } else {
                   await changeStatus({ orderId: id! })
                 }
+              },
+              async () => {
+                await fakeGHNCanceledOrder({ orderId: id! })
               }
             )}
         </Stack>

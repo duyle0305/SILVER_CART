@@ -24,6 +24,13 @@ export const fakeGHNChangeStatus = async (orderId: string) => {
   await apiClient.post(`Shipping/${orderId}/FakeGHNChangeStatus`)
 }
 
+export const fakeCancelOrderGHN = async (orderId: string) => {
+  await apiClient.post(`Order/CancelOrder`, {
+    orderId,
+    cancelReason: 'Refund product',
+  })
+}
+
 export const createOrderInGHN = async (orderId: string) => {
   await apiClient.post(`Shipping/${orderId}/CreateOrderInGHN`)
 }

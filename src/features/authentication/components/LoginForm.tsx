@@ -65,7 +65,7 @@ const LoginForm = () => {
   return (
     <FormContainer>
       <StyledForm onSubmit={handleSubmit(onSubmit)}>
-        <Title variant="h4">Welcome to SILVERCART SYSTEM</Title>
+        <Title variant="h4">Welcome to SILVER CART SYSTEM</Title>
         <Subtitle variant="body1">Log in with the provided account.</Subtitle>
 
         {isShowAlert && (

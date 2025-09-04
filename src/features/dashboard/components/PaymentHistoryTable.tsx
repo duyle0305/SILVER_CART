@@ -22,13 +22,15 @@ import { StyledTableRow } from './styles/PaymentHistoryTable.styles'
 
 const statusMeta: Record<
   number,
-  { label: string; color: 'default' | 'success' | 'error' | 'warning' | 'info' }
+  {
+    label: string
+    color: 'default' | 'success' | 'error' | 'warning' | 'info' | 'primary'
+  }
 > = {
   0: { label: 'TopUp', color: 'warning' },
-  1: { label: 'Paid', color: 'default' },
-  2: { label: 'Failed', color: 'error' },
-  3: { label: 'Refunded', color: 'info' },
-  4: { label: 'Withdraw', color: 'success' },
+  1: { label: 'Paid', color: 'success' },
+  2: { label: 'Refunded', color: 'error' },
+  3: { label: 'Withdraw', color: 'primary' },
 }
 
 const headCells: readonly HeadCell<PaymentHistoryItem>[] = [
@@ -74,7 +76,11 @@ export default function PaymentHistoryTable() {
   )
 
   const onRowClick = useCallback(
-    (row: PaymentHistoryItem) => navigate(`/orders/${row.orderId}`),
+    (row: PaymentHistoryItem) => {
+      if (row.orderId) {
+        navigate(`/orders/${row.orderId}`)
+      }
+    },
     [navigate]
   )
 

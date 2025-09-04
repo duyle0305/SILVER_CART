@@ -21,10 +21,10 @@ import {
 } from '@mui/material'
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCategoriesNoValue } from '@/features/categories/hooks/useCategoriesNoValue'
 import type { SelectChangeEvent } from '@mui/material'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { authorizationAction } from '@/features/authentication/constants'
+import { useLeafCategories } from '@/features/categories/hooks/useLeafCategories'
 
 export interface ProductFilters {
   keyword: string
@@ -44,7 +44,7 @@ const ProductTableToolbar = ({
 }: ProductTableToolbarProps) => {
   const navigate = useNavigate()
   const { data: categories = [], isLoading: isLoadingCategories } =
-    useCategoriesNoValue()
+    useLeafCategories()
   const { user } = useAuthContext()
   const allowCreateProducts =
     user?.role && authorizationAction.allowCreateProducts.includes(user.role)
@@ -118,16 +118,16 @@ const ProductTableToolbar = ({
                 input={<OutlinedInput label="Categories" />}
                 renderValue={(selected) =>
                   categories
-                    .filter((c) => selected.includes(c.id))
+                    .filter((c) => selected.includes(c.valueId))
                     .map((c) => c.label)
                     .join(', ')
                 }
                 disabled={isLoadingCategories}
               >
                 {categories.map((cat) => (
-                  <MenuItem key={cat.id} value={cat.id}>
+                  <MenuItem key={cat.valueId} value={cat.valueId}>
                     <Checkbox
-                      checked={filters.categoryIds.indexOf(cat.id) > -1}
+                      checked={filters.categoryIds.indexOf(cat.valueId) > -1}
                     />
                     <ListItemText primary={cat.label} />
                   </MenuItem>

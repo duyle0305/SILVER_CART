@@ -11,33 +11,15 @@ import { Outlet, useNavigate } from 'react-router-dom'
 const AppLayout = () => {
   const navigate = useNavigate()
 
-  console.log('AppLayout component mounted')
-
-  // Global message listener for video call events
   useEffect(() => {
     const handleGlobalMessage = (e: MessageEvent) => {
-      console.log(
-        'AppLayout received global message:',
-        e.data,
-        'from origin:',
-        e.origin
-      )
-
       const data = e.data
       if (!data || typeof data !== 'object') return
 
       if (data.type === 'VCALL_ENDED') {
-        console.log('AppLayout processing VCALL_ENDED message:', data)
-
         const callerUserId = data.userId as string | undefined
         const receivedProductId = data.productId as string | undefined
         const shouldNavigate = data.shouldNavigateToReports !== false
-
-        console.log('AppLayout navigation data:', {
-          callerUserId,
-          receivedProductId,
-          shouldNavigate,
-        })
 
         if (shouldNavigate) {
           const params = new URLSearchParams()
@@ -47,8 +29,6 @@ const AppLayout = () => {
           const qs = `?${params.toString()}`
           const targetUrl = `/reports/add${qs}`
 
-          console.log('AppLayout navigating to:', targetUrl)
-
           setTimeout(() => {
             navigate(targetUrl, { replace: true })
           }, 100)
@@ -56,16 +36,13 @@ const AppLayout = () => {
       }
 
       if (data.type === 'TEST_MESSAGE') {
-        console.log('AppLayout received TEST_MESSAGE:', data)
         alert('Test message received in parent window!')
       }
     }
 
-    console.log('AppLayout: Adding global message listener')
     window.addEventListener('message', handleGlobalMessage)
 
     return () => {
-      console.log('AppLayout: Removing global message listener')
       window.removeEventListener('message', handleGlobalMessage)
     }
   }, [navigate])
