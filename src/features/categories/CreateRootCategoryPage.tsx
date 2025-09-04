@@ -88,7 +88,7 @@ export default function CreateUpdateRootCategoryPage() {
       description: v.description?.trim() ?? '',
     }))
     if (isEdit) {
-      updateRootCategory({ id: id!, values } as any, {
+      updateRootCategory({ id: id!, ...values[0] } as any, {
         onSuccess: () => {
           showNotification('Root category updated successfully!', 'success')
           navigate('/categories')

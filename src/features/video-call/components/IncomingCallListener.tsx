@@ -55,8 +55,6 @@ export default function IncomingCallListener() {
 
   const { data: connection } = useGetConnection(user?.userId ?? '', enabled)
 
-  const productId = (connection as any)?.productId
-
   const isCall = connection?.type === 'CALL'
   const open =
     !!connection && isCall && !isInCallPage && !isDismissed(connection?.id)
@@ -74,54 +72,95 @@ export default function IncomingCallListener() {
 
   const handleAccept = () => {
     if (!connection) return
+    console.log('🚀 Opening video call in new tab (full browser capabilities)')
+    // Store the connection data in session storage so the video call page can access it
     stashConnection(connection)
 
-    const url = `/video-call/${connection.id}`
+    // Open video call in new tab with full browser capabilities
+    const url = `/video-call/${connection.id}?tab=true`
 
-    const popup = window.open(
-      url,
-      `videocall-${connection.id}`,
-      ['width=1024', 'height=720', 'noopener', 'noreferrer'].join(',')
-    )
+    console.log('📍 Opening new tab with:', url)
+    // Open in new tab - this maintains full WebRTC capabilities unlike popup windows
+    const newTab = window.open(url, '_blank')
 
-    if (popup) {
-      popupRef.current = popup
+    if (newTab) {
+      // Store reference to the tab for communication
+      popupRef.current = newTab
       markDismissed(connection.id)
-      if (productId) {
-        navigate(`/products/${productId}`)
-      }
+      console.log('✅ Video call tab opened successfully')
     } else {
-      navigate(url, { state: { connection } })
+      console.error(
+        '❌ Failed to open video call tab - popup blocker may be active'
+      )
     }
   }
 
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return
+      console.log(
+        'IncomingCallListener received message:',
+        e.data,
+        'from origin:',
+        e.origin
+      )
+
       const data = e.data
-      if (!data || typeof data !== 'object') return
+      if (!data || typeof data !== 'object') {
+        console.log('Invalid message data:', data)
+        return
+      }
 
       if (data.type === 'VCALL_ENDED') {
+        console.log('Processing VCALL_ENDED message:', data)
+
         const callerUserId = data.userId as string | undefined
         const receivedProductId = data.productId as string | undefined
+        const shouldNavigate = data.shouldNavigateToReports !== false // Default to true
 
-        const params = new URLSearchParams()
-        if (callerUserId) params.set('userId', callerUserId)
-        if (receivedProductId) params.set('productId', receivedProductId)
+        console.log('Navigation data:', {
+          callerUserId,
+          receivedProductId,
+          shouldNavigate,
+          hasPopupRef: !!popupRef.current,
+          popupClosed: popupRef.current?.closed,
+        })
 
-        const qs = `?${params.toString()}`
-
-        navigate(`/reports/add${qs}`, { replace: true })
-
+        // Close popup first
         try {
-          popupRef.current?.close()
-        } catch {}
+          if (popupRef.current && !popupRef.current.closed) {
+            console.log('Closing popup...')
+            popupRef.current.close()
+          }
+        } catch (error) {
+          console.warn('Error closing popup:', error)
+        }
         popupRef.current = null
+
+        // Then navigate to reports if requested
+        if (shouldNavigate) {
+          const params = new URLSearchParams()
+          if (callerUserId) params.set('userId', callerUserId)
+          if (receivedProductId) params.set('productId', receivedProductId)
+
+          const qs = `?${params.toString()}`
+          const targetUrl = `/reports/add${qs}`
+
+          console.log('Navigating to:', targetUrl)
+
+          // Small delay to ensure popup is closed before navigation
+          setTimeout(() => {
+            navigate(targetUrl, { replace: true })
+          }, 100)
+        }
       }
     }
 
+    console.log('IncomingCallListener: Adding message listener')
     window.addEventListener('message', onMessage)
-    return () => window.removeEventListener('message', onMessage)
+    return () => {
+      console.log('IncomingCallListener: Removing message listener')
+      window.removeEventListener('message', onMessage)
+    }
   }, [navigate])
 
   return (

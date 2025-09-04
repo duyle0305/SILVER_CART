@@ -8,6 +8,7 @@ import AgoraRTC, {
   type IAgoraRTCClient,
   type ICameraVideoTrack,
   type IMicrophoneAudioTrack,
+  type IAgoraRTCRemoteUser,
 } from 'agora-rtc-sdk-ng'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -41,6 +42,7 @@ export default function VideoCallPage() {
   const { user: consultant } = useAuthContext()
   const leavingRef = useRef(false)
   const frameRef = useRef<HTMLDivElement | null>(null)
+
   const [client] = useState<IAgoraRTCClient>(() =>
     AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
   )
@@ -48,6 +50,7 @@ export default function VideoCallPage() {
   const [micOn, setMicOn] = useState(true)
   const [speaking, setSpeaking] = useState(false)
   const speakingRef = useRef(false)
+  const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([])
 
   const dragRef = useRef({
     dragging: false,
@@ -69,21 +72,24 @@ export default function VideoCallPage() {
     return state?.connection || unstashConnection(connectionId) || null
   }, [state?.connection, connectionId])
 
-  const urlChannel = connection?.channelName
-  const urlToken = connection?.token
-  const urlUid = consultant?.userId ?? null
-
   const productId = useMemo(() => {
     return (connection as any)?.productId
   }, [connection])
 
-  const CHANNEL = urlChannel ?? ''
-  const TOKEN: string | null = urlToken ?? null
-  const UID = urlUid
+  const CHANNEL = connection?.channelName ?? ''
+  const TOKEN: string | null = connection?.token ?? null
+
+  const parsedUID = consultant?.userId ? parseInt(consultant.userId, 10) : 0
+  const UID = !isNaN(parsedUID) && parsedUID > 0 ? parsedUID : null
 
   const HEADER_NAME = connection?.fullName ?? 'Customer'
   const HEADER_AVATAR = ''
 
+  useEffect(() => {
+    if (window.opener && !window.name) {
+      window.name = 'video-call-popup'
+    }
+  }, [])
   const onPipPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
     const pip = e.currentTarget
     const frame = frameRef.current
@@ -131,7 +137,6 @@ export default function VideoCallPage() {
     const track = audioRef.current
     const next = !micOn
     setMicOn(next)
-
     try {
       if (track && typeof track.setEnabled === 'function') {
         await track.setEnabled(next)
@@ -139,7 +144,6 @@ export default function VideoCallPage() {
     } catch (e) {
       console.error('Toggle mic failed:', e)
     }
-
     if (!next) {
       speakingRef.current = false
       setSpeaking(false)
@@ -151,144 +155,200 @@ export default function VideoCallPage() {
     leavingRef.current = true
 
     try {
-      try {
-        await disconnect?.(consultant?.userId ?? '')
-      } catch (e) {
-        console.warn('disconnect() failed:', e)
-      }
-
-      try {
-        const tracks = [audioRef.current, videoRef.current].filter(Boolean) as (
-          | IMicrophoneAudioTrack
-          | ICameraVideoTrack
-        )[]
-        if (tracks.length) await client.unpublish(tracks)
-      } catch (e) {
-        console.warn('unpublish failed:', e)
-      }
+      await disconnect?.(consultant?.userId ?? '')
 
       audioRef.current?.close()
       videoRef.current?.close()
+      audioRef.current = null
+      videoRef.current = null
 
-      try {
-        await client.leave()
-      } catch (e) {
-        console.warn('leave failed:', e)
-      }
-      joinedRef.current = false
+      await client.leave()
+    } catch (e) {
+      console.warn('Error during Agora cleanup:', e)
     } finally {
+      joinedRef.current = false
       const callerUserId = connection?.userId ?? ''
-      const params = new URLSearchParams()
-      if (callerUserId) params.set('userId', callerUserId)
-      if (productId) params.set('productId', productId)
+      const searchParams = new URLSearchParams(window.location.search)
+      const isPopupFromUrl = searchParams.get('popup') === 'true'
+      const isTabFromUrl = searchParams.get('tab') === 'true'
+      const isInSeparateWindow =
+        isPopupFromUrl ||
+        isTabFromUrl ||
+        (window.opener && !window.opener.closed)
 
-      const qs = `?${params.toString()}`
-      const reportUrl = `/reports/add${qs}`
-
-      if (window.opener && !window.opener.closed) {
+      if (isInSeparateWindow) {
         try {
-          window.opener.postMessage(
-            {
+          if (window.opener && !window.opener.closed) {
+            const message = {
               type: 'VCALL_ENDED',
               userId: callerUserId,
               connectionId,
               productId: productId,
-            },
-            window.location.origin
-          )
-        } catch {
-          navigate(reportUrl, { replace: true })
-          return
+              shouldNavigateToReports: true,
+            }
+            window.opener.postMessage(message, '*')
+          }
+        } catch (error) {
+          console.warn('Error sending message to parent:', error)
         }
-
-        try {
-          window.close()
-        } catch {
-          navigate(reportUrl, { replace: true })
-        }
+        window.close()
       } else {
+        const params = new URLSearchParams()
+        if (callerUserId) params.set('userId', callerUserId)
+        if (productId) params.set('productId', productId)
+        const reportUrl = `/reports/add?${params.toString()}`
         navigate(reportUrl, { replace: true })
       }
     }
   }
 
   useEffect(() => {
-    if (!CHANNEL) {
-      console.warn('No channel provided in query. Abort join.')
+    if (!CHANNEL || !connection) {
+      console.warn('⚠️ Missing channel or connection data!')
       return
     }
 
-    let canceled = false
+    let isCancelled = false
 
-    const onUserPublished = async (user: any, mediaType: 'audio' | 'video') => {
-      await client.subscribe(user, mediaType)
-      if (mediaType === 'video' && user.videoTrack) {
-        user.videoTrack.play('remote-player')
-      }
-      if (mediaType === 'audio' && user.audioTrack) {
-        user.audioTrack.play()
+    const handleUserPublished = async (
+      user: IAgoraRTCRemoteUser,
+      mediaType: 'audio' | 'video'
+    ) => {
+      try {
+        console.log(`User ${user.uid} published ${mediaType}. Subscribing...`)
+        await client.subscribe(user, mediaType)
+        console.log(`Successfully subscribed to ${user.uid}'s ${mediaType}.`)
+        setRemoteUsers(Array.from(client.remoteUsers))
+      } catch (error) {
+        console.error(
+          `❌ FAILED TO SUBSCRIBE to ${mediaType} from ${user.uid}:`,
+          error
+        )
       }
     }
 
-    const onUserLeft = () => {
+    const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
+      console.log(`User ${user.uid} unpublished their media.`)
+      setRemoteUsers(Array.from(client.remoteUsers))
+    }
+
+    const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
+      console.log(`User ${user.uid} left the channel.`)
+      setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.uid !== user.uid))
       if (!leavingRef.current) {
         void handleDisconnect()
       }
     }
 
-    const init = async () => {
+    const initializeAgora = async () => {
+      if (!config.agoraAppId) {
+        console.error('❌ No Agora App ID configured!')
+        return
+      }
+
+      client.on('user-published', handleUserPublished)
+      client.on('user-unpublished', handleUserUnpublished)
+      client.on('user-left', handleUserLeft)
+
       try {
         await client.join(config.agoraAppId, CHANNEL, TOKEN, UID ?? null)
-        if (canceled) return
+        if (isCancelled) return
         joinedRef.current = true
+        console.log('✅ Successfully joined channel:', CHANNEL)
+
+        if (client.remoteUsers.length > 0) {
+          console.log(
+            'Found existing users:',
+            client.remoteUsers.map((u) => u.uid)
+          )
+          for (const user of client.remoteUsers) {
+            if (user.hasVideo) await handleUserPublished(user, 'video')
+            if (user.hasAudio) await handleUserPublished(user, 'audio')
+          }
+        }
 
         const [audioTrack, videoTrack] =
           await AgoraRTC.createMicrophoneAndCameraTracks()
-        if (canceled) return
-
+        if (isCancelled) {
+          audioTrack.close()
+          videoTrack.close()
+          return
+        }
         audioRef.current = audioTrack
         videoRef.current = videoTrack
 
-        try {
-          await audioTrack.setEnabled(micOn)
-        } catch (e) {
-          console.error('Sync mic state failed:', e)
-        }
+        await audioTrack.setEnabled(micOn)
 
         await client.publish([audioTrack, videoTrack])
+        console.log('✅ Successfully published local tracks.')
+
         videoTrack.play('local-player')
       } catch (error) {
-        console.error('Failed to initialize Agora:', error)
+        console.error('❌ Failed to initialize Agora:', error)
       }
     }
 
-    client.on('user-published', onUserPublished)
-    client.on('user-left', onUserLeft)
-
-    init()
+    initializeAgora()
 
     return () => {
-      canceled = true
-      client.off('user-published', onUserPublished)
-      client.off('user-left', onUserLeft)
-      audioRef.current?.close()
-      videoRef.current?.close()
-      if (joinedRef.current) client.leave()
+      isCancelled = true
+      console.log('Cleaning up Agora instance...')
+      client.removeAllListeners()
     }
-  }, [client, CHANNEL, TOKEN, UID])
+  }, [client, CHANNEL, TOKEN, UID, connection])
 
   useEffect(() => {
-    const onConnChange = (cur: string, _: string, __?: any) => {
-      if (
-        (cur === 'DISCONNECTED' || cur === 'DISCONNECTING') &&
-        !leavingRef.current
-      ) {
-        void handleDisconnect()
+    if (remoteUsers.length === 0) return
+
+    remoteUsers.forEach((user) => {
+      if (user.hasVideo && user.videoTrack) {
+        try {
+          console.log(`Attempting to play video for user ${user.uid}`)
+          user.videoTrack.play('remote-player')
+          console.log(`✅ Video for ${user.uid} is playing.`)
+        } catch (err) {
+          console.error(`❌ Failed to play video for ${user.uid}:`, err)
+        }
+      }
+
+      if (user.hasAudio && user.audioTrack) {
+        if (!user.audioTrack.isPlaying) {
+          try {
+            console.log(`Attempting to play audio for user ${user.uid}`)
+            user.audioTrack.play()
+            console.log(`✅ Audio for ${user.uid} is playing.`)
+          } catch (err) {
+            console.error(`❌ Failed to play audio for ${user.uid}:`, err)
+          }
+        }
+      }
+    })
+  }, [remoteUsers])
+
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      if (joinedRef.current) {
+        await handleDisconnect()
       }
     }
-    client.on('connection-state-change', onConnChange)
-    return () => client.off('connection-state-change', onConnChange)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
   }, [client])
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      if (event.data?.type === 'FORCE_CLOSE_POPUP') {
+        handleDisconnect()
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [])
 
   useEffect(() => {
     const frame = frameRef.current
@@ -313,7 +373,6 @@ export default function VideoCallPage() {
   useEffect(() => {
     const THRESHOLD = 0.06
     const QUIET_FRAMES = 4
-
     let quietCount = 0
     const intervalId = window.setInterval(() => {
       const track = audioRef.current
@@ -368,17 +427,10 @@ export default function VideoCallPage() {
             onPointerMove={onPipPointerMove}
             onPointerUp={onPipPointerUp}
             style={{ left: pipPos.x, top: pipPos.y }}
-            aria-label="Local preview window"
-            role="button"
             sx={{
               outline: speaking
                 ? (t) => `3px solid ${t.palette.primary.main}`
                 : 'none',
-              boxShadow: speaking
-                ? (t) =>
-                    `0 0 0 4px ${t.palette.primary.main}33, 0 6px 18px rgba(0,0,0,0.35)`
-                : '0 4px 16px rgba(0,0,0,0.3)',
-              transition: 'outline 120ms ease, box-shadow 120ms ease',
             }}
           >
             <div id="local-player" style={{ width: '100%', height: '100%' }} />
@@ -387,14 +439,8 @@ export default function VideoCallPage() {
           <Controls>
             <Stack direction="row" spacing={4}>
               <ControlWithLabel>
-                <Tooltip
-                  title={micOn ? 'Mute microphone' : 'Unmute microphone'}
-                >
-                  <CircleButton
-                    variant="contained"
-                    aria-label={micOn ? 'Mute microphone' : 'Unmute microphone'}
-                    onClick={handleToggleMic}
-                  >
+                <Tooltip title={micOn ? 'Mute' : 'Unmute'}>
+                  <CircleButton variant="contained" onClick={handleToggleMic}>
                     {micOn ? <MicRoundedIcon /> : <MicOffRoundedIcon />}
                   </CircleButton>
                 </Tooltip>
@@ -406,10 +452,8 @@ export default function VideoCallPage() {
                 <Tooltip title="Disconnect">
                   <CircleButton
                     variant="contained"
-                    aria-label="Disconnect"
                     onClick={handleDisconnect}
                     color="error"
-                    sx={{ backgroundColor: (t) => t.palette.error.light }}
                   >
                     <CallEndRoundedIcon />
                   </CircleButton>

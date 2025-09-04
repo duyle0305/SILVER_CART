@@ -85,7 +85,7 @@ export default function CreateUpdateSubCategoryPage() {
   const pending = isCreating || isUpdating || (isEdit && isLoadingDetail)
 
   const onSubmit = async (data: CreateSubCategoryFormInputs) => {
-    if (!subId) {
+    if (isEdit && !subId) {
       showNotification('Missing sub-category id in URL.', 'error')
       return
     }
@@ -99,17 +99,17 @@ export default function CreateUpdateSubCategoryPage() {
       if (isEdit) {
         await updateSubCategory({
           id: subId,
-          updateCategoryValueDtos: values,
+          ...values[0],
         } as any)
         showNotification('Sub-category values updated successfully!', 'success')
       } else {
         await createSubCategory({
-          id: subId,
+          id,
           createCategoryValueDtos: values,
         })
         showNotification('Sub-category values created successfully!', 'success')
       }
-      navigate(`/categories/sub-category/${subId}`)
+      navigate(`/categories/sub-category/${id}`)
     } catch (error) {
       let errorMessage = 'An unexpected error occurred.'
       if (isAxiosError(error) && error.response) {

@@ -91,7 +91,7 @@ export default function CreateUpdateBrandPage() {
     }))
 
     if (isEdit) {
-      updateBrand({ id: id!, values } as any, {
+      updateBrand({ id: id!, ...values[0] } as any, {
         onSuccess: () => {
           showNotification('Brand updated successfully!', 'success')
           navigate('/brands')
