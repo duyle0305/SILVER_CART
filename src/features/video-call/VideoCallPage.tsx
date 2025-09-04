@@ -225,7 +225,7 @@ export default function VideoCallPage() {
       }
     }
 
-    const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
+    const handleUserUnpublished = (_user: IAgoraRTCRemoteUser) => {
       setRemoteUsers(Array.from(client.remoteUsers))
     }
 

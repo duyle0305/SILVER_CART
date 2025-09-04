@@ -24,10 +24,46 @@ export const createProductInputSchema = z.object({
     .string()
     .refine((v) => stripHtml(v).length > 0, { message: 'Vui lòng nhập mô tả' }),
   videoFile: z.instanceof(File).optional(),
-  weight: z.string().min(1, 'Weight is required'),
-  height: z.string().optional(),
-  length: z.string().optional(),
-  width: z.string().optional(),
+  weight: z
+    .string()
+    .min(1, 'Weight is required')
+    .refine(
+      (val) => {
+        const num = parseFloat(val)
+        return !isNaN(num) && num >= 0
+      },
+      { message: 'Weight must be a non-negative number' }
+    ),
+  height: z
+    .string()
+    .min(1, 'Height is required')
+    .refine(
+      (val) => {
+        const num = parseFloat(val)
+        return !isNaN(num) && num >= 0
+      },
+      { message: 'Height must be a non-negative number' }
+    ),
+  length: z
+    .string()
+    .min(1, 'Length is required')
+    .refine(
+      (val) => {
+        const num = parseFloat(val)
+        return !isNaN(num) && num >= 0
+      },
+      { message: 'Length must be a non-negative number' }
+    ),
+  width: z
+    .string()
+    .min(1, 'Width is required')
+    .refine(
+      (val) => {
+        const num = parseFloat(val)
+        return !isNaN(num) && num >= 0
+      },
+      { message: 'Width must be a non-negative number' }
+    ),
   manufactureDate: z.any().refine((val) => val, {
     message: 'Manufacture date is required',
   }),

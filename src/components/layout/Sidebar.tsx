@@ -11,7 +11,7 @@ import { useLogoutConfirmation } from '@/features/authentication/hooks/useLogout
 import AppsIcon from '@mui/icons-material/Apps'
 import CategoryIcon from '@mui/icons-material/Category'
 import DashboardIcon from '@mui/icons-material/Dashboard'
-import ChatIcon from '@mui/icons-material/Forum'
+// import ChatIcon from '@mui/icons-material/Forum'
 import InventoryIcon from '@mui/icons-material/Inventory'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PeopleIcon from '@mui/icons-material/People'
