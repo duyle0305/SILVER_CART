@@ -483,7 +483,7 @@ const CreateUpdateProductPage = () => {
                 )}
               />
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            {/* <Grid size={{ xs: 12 }}>
               <Controller
                 name="videoFile"
                 control={control}
@@ -542,7 +542,7 @@ const CreateUpdateProductPage = () => {
                   </Box>
                 )}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
         </SectionPaper>
 
