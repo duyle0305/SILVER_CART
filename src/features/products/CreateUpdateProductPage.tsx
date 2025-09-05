@@ -16,7 +16,7 @@ import { uploadFile } from '@/services/fileUploadService'
 import { zodResolver } from '@hookform/resolvers/zod'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
-import VideoCallIcon from '@mui/icons-material/VideoCall'
+// import VideoCallIcon from '@mui/icons-material/VideoCall'
 import {
   Box,
   Button,
@@ -54,7 +54,7 @@ import { useLeafCategories } from '../categories/hooks/useLeafCategories'
 import { useListProductProperty } from '../product-property/hooks/useListProductProperty'
 import FileUploader from './components/FileUploader'
 import PreviewDialog from './components/PreviewDialog'
-import VideoThumbnail from './components/VideoThumbnail'
+// import VideoThumbnail from './components/VideoThumbnail'
 import { useCreateProduct } from './hooks/useCreateProduct'
 import { useProductDetail } from './hooks/useProductDetail'
 import { useUpdateProduct } from './hooks/useUpdateProduct'
