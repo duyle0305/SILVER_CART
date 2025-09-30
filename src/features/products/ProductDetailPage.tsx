@@ -104,8 +104,8 @@ function ProductDetailPage() {
           </Typography>
           <Chip
             size="small"
-            color={product.isActive ? 'success' : 'error'}
-            label={product.isActive ? 'Active' : 'Inactive'}
+            color={product.isActive ? 'error' : 'success'}
+            label={product.isActive ? 'Deactivate' : 'Activate'}
           />
         </Stack>
         <Stack direction="row" spacing={1}>
@@ -114,18 +114,18 @@ function ProductDetailPage() {
               {product.isActive ? (
                 <Button
                   variant="outlined"
-                  color="error"
-                  onClick={() => toggleProductStatus(product.id)}
-                >
-                  Deactivate
-                </Button>
-              ) : (
-                <Button
-                  variant="outlined"
                   color="success"
                   onClick={() => toggleProductStatus(product.id)}
                 >
                   Activate
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => toggleProductStatus(product.id)}
+                >
+                  Deactivate
                 </Button>
               )}
               <Button

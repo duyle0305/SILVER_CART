@@ -116,9 +116,9 @@ function ProductListPage() {
       </TableCell>
       <TableCell>
         {product.isActive ? (
-          <Chip label="Active" color="success" size="small" />
+          <Chip label="Activate" color="success" size="small" />
         ) : (
-          <Chip label="Deactive" color="error" size="small" />
+          <Chip label="Deactivate" color="error" size="small" />
         )}
       </TableCell>
       {allowModifyProducts && (
