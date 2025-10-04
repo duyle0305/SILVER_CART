@@ -208,7 +208,10 @@ function ProductDetailPage() {
                   label="Price"
                   value={`${variant.price.toLocaleString()} VND`}
                 />
-                <DetailItem label="Stock" value={variant.stock} />
+                <DetailItem
+                  label="Stock"
+                  value={variant.stock.toLocaleString()}
+                />
                 <DetailItem
                   label="Status"
                   value={

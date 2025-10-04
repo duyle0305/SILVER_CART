@@ -72,57 +72,6 @@ const statusChip = (status: string) => {
   return <Chip size="small" label={label} color={color} />
 }
 
-const renderStatusAction = (
-  status: string,
-  isLoading: boolean,
-  onAction: () => void,
-  onCancel: () => void
-) => {
-  switch (status) {
-    case 'Paid':
-      return (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={onAction}
-          loading={isLoading}
-        >
-          Confirm
-        </Button>
-      )
-
-    case 'PendingConfirm':
-    case 'PendingPickup':
-    case 'PendingDelivery':
-    case 'Shipping':
-      return (
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="contained"
-            color="info"
-            onClick={onAction}
-            loading={isLoading}
-          >
-            GHN change status
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={onCancel}
-            loading={isLoading}
-          >
-            GHN cancel status
-          </Button>
-        </Stack>
-      )
-
-    case 'Delivered':
-    case 'Canceled':
-    default:
-      return null
-  }
-}
-
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { showNotification } = useNotification()
@@ -135,8 +84,8 @@ export default function OrderDetailPage() {
 
   const { data: order, isLoading, error } = useOrderDetail(id!)
   const { mutateAsync: changeStatus, isPending } = useCreateOrderInGHN()
-  const { mutateAsync: fakeGHNChangeStatus, isPending: isFakePending } =
-    useFakeGHNChangeStatus()
+  const { mutateAsync: fakeGHNChangeStatus } = useFakeGHNChangeStatus()
+
   const {
     mutateAsync: fakeGHNCanceledOrder,
     isPending: isFakeCanceledPending,
@@ -150,6 +99,26 @@ export default function OrderDetailPage() {
       )
     }
   }, [error, showNotification])
+
+  useEffect(() => {
+    const shouldAutoChangeStatus =
+      order &&
+      [
+        'PendingConfirm',
+        'PendingPickup',
+        'PendingDelivery',
+        'Shipping',
+      ].includes(order.orderStatus)
+
+    if (shouldAutoChangeStatus) {
+      const intervalId = setInterval(() => {
+        fakeGHNChangeStatus({ orderId: id! })
+      }, 5000)
+      return () => {
+        clearInterval(intervalId)
+      }
+    }
+  }, [order, id, fakeGHNChangeStatus])
 
   const itemSubtotal = useMemo(() => {
     if (!order?.orderDetails) return 0
@@ -193,36 +162,35 @@ export default function OrderDetailPage() {
           )}
         </Stack>
         <Stack>
-          {order &&
-            allowModifyStatusOrder &&
-            renderStatusAction(
-              order.orderStatus,
-              [
+          {order && allowModifyStatusOrder && (
+            <>
+              {order.orderStatus === 'Paid' && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => changeStatus({ orderId: id! })}
+                  loading={isPending}
+                >
+                  Confirm
+                </Button>
+              )}
+              {[
                 'PendingConfirm',
                 'PendingPickup',
                 'PendingDelivery',
                 'Shipping',
-              ].includes(order.orderStatus)
-                ? isFakePending || isFakeCanceledPending
-                : isPending,
-              async () => {
-                if (
-                  [
-                    'PendingConfirm',
-                    'PendingPickup',
-                    'PendingDelivery',
-                    'Shipping',
-                  ].includes(order.orderStatus)
-                ) {
-                  await fakeGHNChangeStatus({ orderId: id! })
-                } else {
-                  await changeStatus({ orderId: id! })
-                }
-              },
-              async () => {
-                await fakeGHNCanceledOrder({ orderId: id! })
-              }
-            )}
+              ].includes(order.orderStatus) && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => fakeGHNCanceledOrder({ orderId: id! })}
+                  loading={isFakeCanceledPending}
+                >
+                  GHN cancel status
+                </Button>
+              )}
+            </>
+          )}
         </Stack>
       </Stack>
 

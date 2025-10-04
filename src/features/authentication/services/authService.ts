@@ -7,3 +7,7 @@ export const loginWithEmailAndPassword = async (
   const response = await apiClient.post<string>('Auth/login', data)
   return response
 }
+
+export const logout = async (): Promise<void> => {
+  await apiClient.post('Auth/logout')
+}
